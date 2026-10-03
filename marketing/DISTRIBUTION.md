@@ -173,6 +173,13 @@ What's the highest-leverage thing I could do to get the first 10 users?
 
 ## 5. Direct outreach — the highest-yield channel
 
+**The verified target list is in `marketing/TARGETS.md`** — nine firms with real
+published contact addresses, each with the reason they fit. A ready-to-send email for
+the highest-leverage one is in `marketing/EMAIL-LINKMYBOOKS.md`.
+
+Send to Link My Books first: they are an integration partner to 300+ eCommerce
+accountants, so one email reaches firms you could never reach individually.
+
 Small accounting firms and e-commerce operators are reachable directly and reply to
 plain email. Send **20 of these**. Personalised, three sentences, no pitch deck.
 
