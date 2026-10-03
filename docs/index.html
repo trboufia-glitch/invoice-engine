@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Free invoice CSV checker — runs in your browser</title>
+<meta name="description" content="Paste an invoice CSV or receipt text and instantly find rows where subtotal + tax does not equal total. Runs entirely in your browser — nothing is uploaded.">
+<style>
+  :root{
+    --bg:#0a0c10;--panel:#11151c;--line:#1e2530;--fg:#e6edf6;--dim:#8b98ab;
+    --acc:#4ade80;--warn:#fbbf24;--err:#f87171;--mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+  header{border-bottom:1px solid var(--line);padding:20px 0}
+  .logo{font-family:var(--mono);font-weight:700;font-size:17px}
+  .logo span{color:var(--acc)}
+  .pill{font-family:var(--mono);font-size:12px;border:1px solid var(--line);color:var(--dim);padding:3px 9px;border-radius:20px}
+  h1{font-size:clamp(26px,4.5vw,38px);line-height:1.12;margin:36px 0 12px;letter-spacing:-1.2px}
+  h1 em{color:var(--acc);font-style:normal}
+  .sub{color:var(--dim);font-size:17px;max-width:640px;margin:0 0 14px}
+  .privacy{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;color:var(--acc);
+    background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.28);border-radius:8px;padding:6px 12px;margin-bottom:22px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column}
+  h2{font-size:13px;margin:0 0 11px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);font-weight:600}
+  textarea{width:100%;min-height:260px;background:#07090c;border:1px solid var(--line);border-radius:9px;color:var(--fg);
+    font-family:var(--mono);font-size:12.5px;line-height:1.6;padding:13px;resize:vertical}
+  textarea:focus,select:focus{outline:1px solid var(--acc);border-color:var(--acc)}
+  select{background:#07090c;border:1px solid var(--line);border-radius:8px;color:var(--fg);padding:8px 11px;font-family:var(--mono);font-size:13px}
+  .bar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  button{background:var(--acc);color:#04120a;border:0;border-radius:8px;padding:10px 17px;font-weight:700;font-size:14px;cursor:pointer}
+  button.sec{background:var(--panel);color:var(--fg);border:1px solid var(--line);font-weight:600}
+  .samples{display:flex;gap:7px;flex-wrap:wrap}
+  .samples button{background:var(--panel);color:var(--dim);border:1px solid var(--line);padding:6px 11px;font-size:12.5px;font-weight:500;border-radius:20px}
+  .samples button:hover{color:var(--fg)}
+  .msg{padding:11px 14px;border-radius:9px;font-size:14px;margin-bottom:11px;font-family:var(--mono)}
+  .msg.ok{background:rgba(74,222,128,.09);border:1px solid rgba(74,222,128,.3);color:var(--acc)}
+  .msg.err{background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.3);color:var(--err)}
+  .msg.warn{background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.3);color:var(--warn)}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:11px}
+  .stat{background:#07090c;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:12px;font-family:var(--mono);color:var(--dim)}
+  .stat b{display:block;font-size:18px;color:var(--fg)}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px}
+  th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px}
+  .scroll{overflow-x:auto;max-height:330px;overflow-y:auto}
+  .issue{font-size:11.5px;color:var(--dim);white-space:normal;max-width:340px}
+  footer{border-top:1px solid var(--line);margin-top:44px;padding:22px 0;color:var(--dim);font-size:14px}
+  a{color:var(--acc)}
+  .empty{color:var(--dim);font-family:var(--mono);font-size:12.5px;padding:20px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;justify-content:space-between;align-items:center">
+    <div class="logo">invoice<span>.engine</span></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="pill">no signup</span>
+      <span class="pill">runs offline</span>
+    </div>
+  </header>
+
+  <h1>Find the rows where <em>subtotal + tax ≠ total</em></h1>
+  <p class="sub">Paste an invoice CSV export or raw receipt text. It flags rows that don't add up, tax rates that don't match their amounts, due dates before issue dates, and impossible dates like Feb 31.</p>
+  <div class="privacy">🔒 Everything runs in this browser tab. Nothing is uploaded, stored, or sent anywhere.</div>
+
+  <div class="bar" style="margin-bottom:14px">
+    <span style="font-size:13px;color:var(--dim)">Try:</span>
+    <div class="samples">
+      <button onclick="s(0)">Clean CSV</button>
+      <button onclick="s(1)">Broken totals</button>
+      <button onclick="s(2)">European format</button>
+      <button onclick="s(3)">Receipt text</button>
+      <button onclick="s(4)">Odd headers</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Your data</h2>
+      <textarea id="in" spellcheck="false" placeholder="Paste CSV or receipt text here…"></textarea>
+      <div class="bar">
+        <select id="fmt">
+          <option value="auto">auto-detect</option>
+          <option value="csv">csv / tsv</option>
+          <option value="text">free text</option>
+        </select>
+        <button onclick="run()">Check it</button>
+        <button class="sec" onclick="document.getElementById('in').value='';clear()">Clear</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Result</h2>
+      <div id="msg"></div>
+      <div class="stats" id="stats"></div>
+      <div class="scroll" id="out"><div class="empty">Paste something on the left and press Check it.</div></div>
+    </div>
+  </div>
+
+  <footer>
+    Handles <code>1.234,56</code>, <code>1,234.56</code>, <code>1 234,56</code>, <code>(250.00)</code> negatives, and <code>;</code> / tab / <code>|</code> delimiters.
+    Built as a deterministic API — no LLM, so no invented invoice numbers.<br>
+    <a href="https://github.com/trboufia-glitch/invoice-engine">Source</a>
+  </footer>
+</div>
+
+<script src="invoice-normalize.js"></script>
+<script>
+const $ = (i) => document.getElementById(i);
+
+const SAMPLES = [
+`Invoice Number,Invoice Date,Due Date,Vendor,Currency,Subtotal,Tax,Total
+INV-1001,2026-01-05,2026-02-04,Acme Industrial,USD,1000.00,200.00,1200.00
+INV-1002,2026-01-09,2026-03-09,Globex Components,USD,2500.00,206.25,2706.25
+INV-1003,2026-01-22,2026-02-21,Initech LLC,GBP,430.50,86.10,516.60`,
+`Invoice Number,Invoice Date,Vendor,Currency,Subtotal,Tax,Total
+INV-2001,2026-01-05,Acme,USD,1000.00,200.00,9999.00
+INV-2002,2026-01-06,Globex,EUR,500.00,100.00,600.00
+INV-2003,2026-02-31,Broken Co,USD,300.00,0.00,300.00
+INV-2004,2026-01-09,Tax Cheat,USD,1000.00,100.00,1120.00
+INV-2005,2026-01-11,Late Entry,USD,200.00,40.00,240.00`,
+`Invoice No;Date;Due;Supplier;Currency;Net;VAT;Gross
+R-77;15.03.2026;14.04.2026;Müller GmbH;EUR;1.000,00;190,00;1.190,00
+R-78;16.03.2026;15.04.2026;Atelier Bernard;EUR;2.500,50;475,10;2.975,60`,
+`NORTHWIND SUPPLY CO.
+Receipt #: 8891
+Date: 2026-02-10
+
+2x Widget A          12.50
+3x Widget B          40.00
+1x Large Casing     199.99
+
+Subtotal: $279.99
+VAT 20%: $55.998
+TOTAL DUE: $335.99`,
+`Doc Number (old),Date Issued,Supplier Name,CCY,Net Amount,VAT Amount,Grand Total
+INV-55,2026-02-02,Zenith Trading,GBP,400.00,80.00,480.00
+INV-56,2026-02-03,Kestrel Ltd,GBP,1250.00,250.00,1500.00`];
+
+function s(i){ $('in').value = SAMPLES[i]; clear(); }
+function esc(v){ return String(v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function clear(){ $('msg').innerHTML=''; $('stats').innerHTML=''; $('out').innerHTML='<div class="empty">Ready.</div>'; }
+
+function run(){
+  const input = $('in').value;
+  if (!input.trim()) { $('msg').innerHTML = '<div class="msg err">Paste some data first.</div>'; return; }
+  if (typeof InvoiceNormalize !== 'function') { $('msg').innerHTML = '<div class="msg err">Engine failed to load — re-download invoice-normalize.js.</div>'; return; }
+
+  const t0 = performance.now();
+  let d;
+  try { d = InvoiceNormalize(input, { format: $('fmt').value }); }
+  catch (e) { $('msg').innerHTML = '<div class="msg err">' + esc(e.message) + '</div>'; return; }
+  const ms = Math.round(performance.now() - t0);
+
+  const sum = d.summary;
+  $('stats').innerHTML =
+    '<div class="stat"><b>' + d.row_count + '</b>rows</div>' +
+    '<div class="stat"><b style="color:' + (sum.errors ? 'var(--err)' : 'var(--acc)') + '">' + sum.errors + '</b>errors</div>' +
+    '<div class="stat"><b style="color:' + (sum.warnings ? 'var(--warn)' : 'var(--fg)') + '">' + sum.warnings + '</b>warnings</div>' +
+    '<div class="stat"><b>' + sum.avg_score + '</b>score</div>' +
+    '<div class="stat"><b>' + ms + ' ms</b>in this tab</div>';
+
+  if (sum.errors) $('msg').innerHTML = '<div class="msg err">' + sum.errors + ' row(s) do not add up — do not file these as-is.</div>';
+  else if (sum.warnings) $('msg').innerHTML = '<div class="msg warn">Nothing blocking, but ' + sum.warnings + ' warning(s) worth a look.</div>';
+  else $('msg').innerHTML = '<div class="msg ok">Clean — every row adds up.</div>';
+
+  const cols = ['invoice_number','issued_date','due_date','vendor','currency','subtotal','tax','total'];
+  const show = cols.filter(c => d.records.some(r => r[c] !== null && r[c] !== undefined));
+  let h = '<table><thead><tr>' + show.map(c => '<th>' + c + '</th>').join('') + '<th>issues</th></tr></thead><tbody>';
+  for (const r of d.records.slice(0, 100)) {
+    const errs = r.issues.filter(i => i.severity === 'error');
+    const wrns = r.issues.filter(i => i.severity === 'warning');
+    const detail = r.issues.map(i =>
+      '<div style="color:' + (i.severity === 'error' ? 'var(--err)' : i.severity === 'warning' ? 'var(--warn)' : 'var(--dim)') + '">'
+      + i.code + ': ' + esc(i.message) + (i.source_row ? ' (row ' + i.source_row + ')' : '') + '</div>').join('');
+    h += '<tr>' + show.map(c => '<td>' + (r[c] === null || r[c] === undefined ? '—' : esc(r[c])) + '</td>').join('')
+       + '<td class="issue">' + (errs.length ? '<b style="color:var(--err)">' + errs.length + ' error</b>' : wrns.length ? '<b style="color:var(--warn)">' + wrns.length + ' warn</b>' : '<span style="color:var(--acc)">clean</span>') + detail + '</td></tr>';
+  }
+  h += '</tbody></table>';
+  if (d.records.length > 100) h += '<div class="empty">showing 100 of ' + d.records.length + '</div>';
+  $('out').innerHTML = h;
+}
+
+s(0);
+</script>
+</body>
+</html>
