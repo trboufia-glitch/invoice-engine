@@ -51,7 +51,7 @@ Sites that blocked automated fetching and need a manual visit:
 
 ## Rules that protect the domain
 
-- **Send one at a time, from `trboufia@gmail.com`.** Ten in a row from a fresh
+- **Send one at a time, from `pontboufia@gmail.com`.** Ten in a row from a fresh
   inbox is the pattern spam filters key on. Space them across a morning.
 - **Never send twice to the same address.** If `hello@` bounces, try the listed
   alternative once — then stop.

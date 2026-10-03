@@ -17,4 +17,32 @@ a span{color:var(--dim);font-size:14px}.k{color:var(--acc)}</style></head>
 <a href="./why-totals-dont-add-up.html"><b>Why my totals don't add up</b><span>The five real causes, and how to tell them apart.</span></a>
 <a href="./pricing.html"><b>Pricing <span class="k">-></span></b><span>The browser tool is free forever with no limits. Here's when paying makes sense.</span></a>
 <a href="./api.html"><b>API docs <span class="k">-></span></b><span>Call it from your own pipeline. 25 free calls, no card.</span></a>
-</div></body></html>
+</div>
+<!--
+  Traffic beacon. Sends one anonymous POST per page view to a collector we
+  control, with no cookie, no IP and no fingerprint — page name and referrer
+  host only. If COLLECT is empty the beacon does nothing, which is why the page
+  still works with no collector configured.
+-->
+<script>
+(function () {
+  var COLLECT = "";   // set to the collector URL when one exists
+  if (!COLLECT) return;
+  try {
+    var host = 'direct';
+    if (document.referrer) { try { host = new URL(document.referrer).hostname; } catch (e) {} }
+    fetch(COLLECT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        page: location.pathname,
+        host: host,
+        day: new Date().toISOString().slice(0, 10)
+      }),
+      keepalive: true
+    });
+  } catch (e) {}
+})();
+</script>
+
+</body></html>

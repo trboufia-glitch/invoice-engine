@@ -87,6 +87,35 @@ check('no page leaks an internal placeholder', () => {
   assert.strictEqual(bad.length, 0, 'placeholders: ' + bad.join(', '));
 });
 
+check('SEO files are present', () => {
+  for (const f of ['robots.txt', 'sitemap.xml']) {
+    assert.ok(fs.existsSync(path.join(DOCS, f)), `missing ${f}`);
+  }
+  const robots = fs.readFileSync(path.join(DOCS, 'robots.txt'), 'utf8');
+  assert.ok(/Sitemap:\s*https:\/\/[^\s]+\/sitemap\.xml/.test(robots),
+    'robots.txt does not advertise the sitemap');
+});
+
+check('the IndexNow key file matches the key in indexnow.json', () => {
+  const payloadFile = path.join(DOCS, 'indexnow.json');
+  assert.ok(fs.existsSync(payloadFile), 'indexnow.json missing');
+  const payload = JSON.parse(fs.readFileSync(payloadFile, 'utf8'));
+  const keyFile = path.join(DOCS, payload.key + '.txt');
+  assert.ok(fs.existsSync(keyFile), 'key file ' + payload.key + '.txt missing');
+  assert.strictEqual(fs.readFileSync(keyFile, 'utf8').trim(), payload.key,
+    'key file content does not match the submitted key');
+});
+
+check('every page in the sitemap exists', () => {
+  const xml = fs.readFileSync(path.join(DOCS, 'sitemap.xml'), 'utf8');
+  const locs = [...xml.matchAll(/<loc>https:\/\/[^/]+\/([^<]*)<\/loc>/g)].map((m) => m[1]);
+  assert.ok(locs.length >= 5, 'sitemap lists too few pages');
+  for (const loc of locs) {
+    const name = loc === '' ? 'index.html' : loc;
+    assert.ok(fs.existsSync(path.join(DOCS, name)), `sitemap lists missing file: ${loc}`);
+  }
+});
+
 check('the checker page declares it runs client-side', () => {
   const html = read('index.html');
   assert.ok(/nothing is uploaded|Nothing is uploaded/i.test(html), 'no privacy claim found');

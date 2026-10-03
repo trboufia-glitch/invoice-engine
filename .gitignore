@@ -16,3 +16,4 @@ data/site.json
 .DS_Store
 # one-off debugging scratch files
 scripts/probe*.js
+data/local-visits.jsonl

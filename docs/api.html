@@ -167,5 +167,33 @@
     <a href="./index.html">Free browser version</a> · <a href="./pricing.html">Pricing</a> · <a href="https://github.com/trboufia-glitch/invoice-engine">Source</a>
   </footer>
 </div>
+
+<!--
+  Traffic beacon. Sends one anonymous POST per page view to a collector we
+  control, with no cookie, no IP and no fingerprint — page name and referrer
+  host only. If COLLECT is empty the beacon does nothing, which is why the page
+  still works with no collector configured.
+-->
+<script>
+(function () {
+  var COLLECT = "";   // set to the collector URL when one exists
+  if (!COLLECT) return;
+  try {
+    var host = 'direct';
+    if (document.referrer) { try { host = new URL(document.referrer).hostname; } catch (e) {} }
+    fetch(COLLECT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        page: location.pathname,
+        host: host,
+        day: new Date().toISOString().slice(0, 10)
+      }),
+      keepalive: true
+    });
+  } catch (e) {}
+})();
+</script>
+
 </body>
 </html>
