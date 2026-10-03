@@ -14,6 +14,7 @@
     "test:site": "node tests/site.test.js",
     "outreach": "node scripts/outreach.js --list",
     "seturl": "node scripts/set_url.js",
+    "verify:live": "node scripts/verify_live.js",
     "build:browser": "node scripts/build_browser.js",
     "ledger": "node scripts/log_experiments.js"
   },
