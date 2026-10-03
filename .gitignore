@@ -20,3 +20,5 @@ data/local-visits.jsonl
 scripts/smtp_probe.js
 scripts/smtp_trace.js
 data/delivery-test.txt
+marketing/TARGETS.md
+marketing/EMAIL-LINKMYBOOKS.md

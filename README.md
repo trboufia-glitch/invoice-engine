@@ -1,154 +1,99 @@
-# Invoice Engine
+# invoice-engine
 
-A deterministic invoice/CSV normalizer sold as a metered API. **Zero dependencies, zero
-capital to run, no LLM in the request path** — so every call costs nothing to serve and
-the same input always returns the same output.
+**Your invoice CSV is lying to your accountant.** This finds out which row.
 
-Bookkeepers and small finance teams get a clean JSON record set from a messy export, with
-arithmetic errors, tax mismatches and impossible dates flagged before the data ever reaches
-the ledger.
+Paste a CSV export (or raw receipt text) and get back clean JSON plus every row that
+fails to reconcile — `subtotal + tax ≠ total`, a tax rate that doesn't match its amount,
+due dates before issue dates, impossible dates like `2026-02-31`.
+
+It runs **entirely in the browser tab**. Nothing is uploaded, no signup, no API key,
+free with no limits.
+
+**[Try it →](https://invoice-checker-ie.surge.sh/)** · [Why totals don't add up](https://invoice-checker-ie.surge.sh/why-totals-dont-add-up.html) · [API](https://invoice-checker-ie.surge.sh/api.html)
+
+---
+
+## Why not just use an LLM for this
+
+Because an LLM can invent an invoice number, and a hallucinated figure inside an
+accounting pipeline is worse than no answer. Every check here is arithmetic:
 
 ```
-node server.js          # http://127.0.0.1:8787
-npm test                # 58 tests: 31 unit + 27 end-to-end against a live server
+subtotal 1,000.00 + VAT 200.00 = 1,200.00   but total says 9,999.00
+→ ARITHMETIC_MISMATCH at row 2, off by 8,799
 ```
 
-## Why deterministic
+Deterministic means: no token bill, ~1 ms for a 5-row file, and byte-identical output for
+identical input. It is safe inside a month-end close.
 
-The failure mode that kills trust in an accounting pipeline is a hallucinated invoice
-number or a silently rounded figure. Putting an LLM in the parse loop buys nothing here —
-every check is arithmetic — and costs money per call plus non-reproducibility. The regex
-and arithmetic layer is faster (1–2 ms for 5 rows, ~40 ms for 3,000), free, and auditable.
+## What it actually handles
 
-## API
+The unglamorous cases that break naive parsers:
 
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| POST | `/v1/keys` | no | Mint an API key (25 free calls) |
-| POST | `/v1/normalize` | yes | Parse + validate a file |
-| GET | `/v1/usage` | yes | Credits and call count |
-| POST | `/v1/orders?plan=pro` | yes | Create a payment order |
-| POST | `/v1/orders/:id/confirm` | yes | Settle an order (`{"tx_ref":"0x…"}`) |
-| GET | `/v1/plans` | no | Pricing and payout ID |
-| GET | `/v1/ledger` | no | Public experiment scoreboard |
-| GET | `/playground` | no | Interactive try-it page |
+| Case | Handled |
+|---|---|
+| `1,234.56` · `1.234,56` · `1 234,56` · `1'234.50` | ✅ last separator is the decimal point |
+| `(250.00)` accounting negative | ✅ |
+| Delimiters `,` `;` tab `\|` | ✅ detected per file |
+| `15/03/2026` · `03/15/2026` · `15-Mar-2026` | ✅ disambiguated per value |
+| `2026-02-31` | ✅ rejected, not silently rolled over |
+| `Doc Number (old)` → `invoice_number` | ✅ ~50 header aliases, fuzzy matched |
+| Empty cell | ✅ `null` — **never** `0` |
 
-### Normalize
+## Use it as a library
+
+The engine is pure: no filesystem, no network, no dependencies.
+
+```js
+const { normalize } = require('./lib/normalize');
+
+const r = normalize(csvText, { format: 'csv' });
+
+if (r.summary.errors > 0) {
+  for (const issue of r.issues) {
+    console.error(`row ${issue.source_row}: ${issue.code} — ${issue.message}`);
+  }
+  process.exit(1);   // fail loudly instead of filing bad numbers
+}
+```
+
+## Run the API
 
 ```bash
-KEY=$(curl -s -X POST http://127.0.0.1:8787/v1/keys | node -pe 'JSON.parse(require("fs").readFileSync(0)).api_key')
-
-curl -X POST http://127.0.0.1:8787/v1/normalize \
-  -H "Authorization: Bearer $KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"input":"Invoice Number,Invoice Date,Subtotal,Tax,Total\nINV-1,2026-01-05,1000.00,200.00,1200.00"}'
+node server.js                     # http://127.0.0.1:8787
+npm test                           # 100+ tests
+node scripts/build_browser.js      # regenerate the browser bundle
+node scripts/verify_live.js        # verify the deployed site end to end
 ```
 
-Request fields: `input` (required), `format` (`auto` | `csv` | `text`), `tolerance`
-(arithmetic slack, default `0.05`), `max_rows` (default 5,000, cap 25,000).
-
-## What it handles
-
-**Numbers** — `1,234.56` · `1.234,56` · `1 234,56` · `1'234.50` · accounting negatives
-`(250.00)`. An empty cell is absent (`null`), never `0`.
-
-**Dates** — ISO, `15/03/2026`, `03/15/2026`, `15-Mar-2026`, `Mar 15, 2026`, two-digit
-years. Day-first vs month-first is disambiguated per value; calendar-invalid dates like
-`2026-02-31` are rejected rather than silently coerced.
-
-**Delimiters** — `,` `;` tab `|`, detected per file. Quoted fields with embedded
-delimiters and escaped quotes survive.
-
-**Headers** — ~50 aliases with fuzzy matching, so `Doc Number (old)` maps to
-`invoice_number` and `Grand Total` to `total`. Unmapped headers are reported, not guessed.
-
-**Validation** — `subtotal + tax = total`; the tax rate is recomputed against the tax
-amount; due dates before issue dates; future dates; unknown currency codes; partial
-payments. Every issue carries `source_row` so a customer can jump to the exact line.
-
-Each row gets a 0–100 score (`100 − 25·errors − 7·warnings`) and the response carries a
-summary plus `ok: false` whenever any blocking error exists.
-
-## Billing
-
-Credit-metered. Credits are debited per call; exhausted credits return `402` with the
-top-up path. Settlement is idempotent in both directions — a replayed confirmation on the
-same order returns `already_settled`, and a `tx_ref` already used by another order is
-rejected with `409`. No path exists to mint credits for free.
-
-Payout destination is configurable via `BINANCE_ID` (default in `server.js`).
-
-## Deployment
-
-`Dockerfile`, `railway.json` and `render.yaml` are included and verified. Full walkthrough
-in `marketing/DEPLOY.md`. Two things are not optional:
-
-- **Mount a persistent volume at `/data`.** A container filesystem is wiped on every
-  deploy — without a volume, every live API key and paid credit is lost on restart. The
-  service prints a warning at boot if neither a volume nor `DATA_DIR` is configured.
-- **Set `BINANCE_ID`.** It defaults to `990584936`.
-
-The service binds `0.0.0.0` automatically on a container (`RAILWAY_ENVIRONMENT`, `RENDER`
-or `/.dockerenv` detected) — binding to `127.0.0.1` on a PaaS host looks like a crash
-while the process is actually healthy.
-
-## Distribution
-
-`marketing/DISTRIBUTION.md` contains ready-to-post copy for Hacker News, r/Bookkeeping,
-r/smallbusiness and Indie Hackers, plus a 20-email direct-outreach template.
-
-Funnel events are tracked from the pages themselves and read back at `/v1/funnel`:
-
-```
-landing_view → playground_view → key_minted → orders_created → orders_paid
-```
-
-Distribution is the only channel that produces revenue, so the question that matters
-first is never "what else should I build" — it is which of these steps is losing people.
-
-## What this is (data layout)
-
-```
-lib/normalize.js    parsing + validation core (no I/O, no deps)
-lib/store.js        API keys, credit ledger, orders, experiment log
-server.js           HTTP layer: auth, metering, checkout
-public/             landing page + playground (server-hosted)
-docs/               browser-only site: index.html, pricing.html, api.html + generated bundle
-tests/              unit, live-server e2e, docs-fidelity, browser-page suites
-data/               store.json (keys/orders), experiments.jsonl (ledger)
-```
-
-`store.json` is written via temp-file-then-rename, so a crash mid-write cannot truncate it;
-a corrupt store is moved aside rather than crashing the service.
-
-## Configuration
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `PORT` | `8787` | Listen port |
-| `HOST` | `127.0.0.1` | Bind address |
-| `BINANCE_ID` | `990584936` | Payout destination |
+Zero runtime dependencies. Docker, Railway and Render configs included.
 
 ## Honest status
 
-Built and verified: the engine, the API, auth, metering, checkout, settlement safety, the
-landing page, the playground, the Docker/Railway/Render deployment files and the
-distribution copy. **91/91 tests green** (31 unit, 32 end-to-end against a live server, 18 asserting the
-API docs match real output, 10 exercising the browser page's export helpers), plus live
-browser verification of the pages and funnel tracking.
+Works, tested, and deployed — **zero revenue and no users yet.** The
+[experiment ledger](https://invoice-checker-ie.surge.sh/ledger) is public and records
+everything, including the ten bugs found while building it:
 
-**Not done, and the reason is your accounts, not effort:**
+- the CSV splitter was hardcoded to `,` while the detector chose `;`, so **every European
+  export collapsed into one column** — silent corruption
+- `/total/i` matched inside "Sub**total**", leaking the subtotal into the total
+- `toNumber("")` returned `0`, so every missing column looked like a real zero and
+  manufactured warnings
+- the HTML was served as `text/plain`, so browsers showed raw source
+- the rate limiter keyed on IP, throttling paying customers
+- the demo data shipped with its own arithmetic errors, so the demo cried wolf
+- the ledger seed was CSV inside a `.jsonl` file: 0 of 13 lines parsed, and the public
+  ledger came up empty in production
 
-- **Not deployed.** No GitHub repo, no git identity, no `gh`, and no Railway/Render
-  credentials exist on this machine. Creating accounts and accepting their terms in your
-  name is not mine to do. Everything needed is staged in git — 19 files, credentials
-  excluded — and `marketing/DEPLOY.md` has the exact commands.
-- **No commit or push was run.** That needs your name and email, and your explicit word.
-- **No revenue.** `$0`, and it stays `$0` until the distribution posts go out and
-  someone decides to pay. Distribution is the bottleneck, not engineering.
-- **No on-chain payment watcher.** Settlement is an API call carrying the customer's tx
-  hash; verifying it against a real chain is the next build if you ever want unattended
-  crediting.
+The last one is why this README is public: the failures are the most useful part.
 
-`/v1/ledger` records all of this honestly: 10 experiments, 3 successful, 6 bugs found and
-fixed, each with the cause written down.
+## Deploying it yourself
+
+`Dockerfile`, `railway.json` and `render.yaml` are included. If you deploy on a PaaS
+container, **mount a persistent volume at `/data`** — otherwise API keys and credits are
+lost on every deploy. The service binds `0.0.0.0` automatically when it detects a
+container.
+
+## License
+
+MIT.
