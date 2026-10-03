@@ -1,0 +1,19 @@
+{
+  "name": "invoice-engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic invoice/CSV normalizer and validator as a zero-dependency metered API.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/normalize.test.js && node tests/e2e.test.js",
+    "test:unit": "node tests/normalize.test.js",
+    "test:e2e": "node tests/e2e.test.js",
+    "ledger": "node scripts/log_experiments.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "license": "UNLICENSED"
+}

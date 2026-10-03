@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice Engine — clean invoice data from messy files</title>
+<meta name="description" content="One API call turns messy CSV or pasted receipt text into clean, validated invoice records. Detects arithmetic errors, tax mismatches and bad dates.">
+<style>
+  :root{
+    --bg:#0a0c10; --panel:#11151c; --line:#1e2530; --fg:#e6edf6; --dim:#8b98ab;
+    --acc:#4ade80; --acc2:#60a5fa; --warn:#fbbf24; --err:#f87171; --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px}
+  header{border-bottom:1px solid var(--line);padding:26px 0;position:sticky;top:0;background:rgba(10,12,16,.9);backdrop-filter:blur(8px);z-index:10}
+  .bar{display:flex;align-items:center;gap:16px;justify-content:space-between}
+  .logo{font-family:var(--mono);font-weight:700;letter-spacing:-.5px}
+  .logo span{color:var(--acc)}
+  nav a{color:var(--dim);text-decoration:none;margin-left:18px;font-size:14px}
+  nav a:hover{color:var(--fg)}
+  .hero{padding:64px 0 40px}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.1;margin:0 0 16px;letter-spacing:-1.5px}
+  h1 em{color:var(--acc);font-style:normal}
+  .sub{color:var(--dim);font-size:19px;max-width:620px;margin:0 0 28px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{display:inline-block;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;border:1px solid var(--line);background:var(--panel);color:var(--fg)}
+  .btn.primary{background:var(--acc);color:#04120a;border-color:var(--acc)}
+  .btn:hover{transform:translateY(-1px)}
+  .grid{display:grid;gap:14px;margin:44px 0}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:1fr 1fr}
+  @media(max-width:720px){.g3,.g2{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+  .card h3{margin:0 0 8px;font-size:16px}
+  .card p{margin:0;color:var(--dim);font-size:14.5px}
+  .ico{font-size:22px;margin-bottom:10px;display:block}
+  pre{background:#07090c;border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.55;color:#c9d6e5}
+  .k{color:#7ee787}.s{color:#a5d6ff}.c{color:#ffd580}.n{color:#ff7b72}
+  h2{font-size:24px;margin:56px 0 18px;letter-spacing:-.5px}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  td{padding:11px 8px;border-bottom:1px solid var(--line)}
+  td:last-child{text-align:right;font-family:var(--mono)}
+  .tag{display:inline-block;font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--dim)}
+  section{padding-bottom:20px}
+  footer{border-top:1px solid var(--line);margin-top:60px;padding:26px 0;color:var(--dim);font-size:14px}
+  .note{font-size:13.5px;color:var(--dim);background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.25);border-radius:10px;padding:14px 16px;margin:20px 0}
+  .free{color:var(--acc)}
+</style>
+</head>
+<body>
+<header><div class="wrap bar">
+  <div class="logo">invoice<span>.engine</span></div>
+  <nav><a href="#how">How</a><a href="#pricing">Pricing</a><a href="#try">Try it</a><a href="/v1/ledger">Ledger</a></nav>
+</div></header>
+
+<div class="wrap">
+  <section class="hero">
+    <h1>Your invoice CSV is <em>lying</em> to your accountant.</h1>
+    <p class="sub">One API call reads messy CSV, TSV or pasted receipt text and returns clean, validated invoice records — with arithmetic errors, tax mismatches and impossible dates flagged automatically.</p>
+    <div class="cta">
+      <a class="btn primary" href="#try">Try 25 calls free</a>
+      <a class="btn" href="/playground">Open playground</a>
+    </div>
+    <p style="margin-top:14px;font-size:14px;color:var(--dim)">No signup wall · deterministic, no LLM in the loop · a 3,000-row file parses in under 40&nbsp;ms</p>
+  </section>
+
+  <div class="grid g3">
+    <div class="card"><span class="ico">🔢</span><h3>Kills locale bugs</h3><p>Handles <code>1.234,56</code>, <code>1,234.56</code>, <code>1 234,56</code>, <code>1'234.50</code> and accounting negatives <code>(250.00)</code>. Detects <code>;</code>, tab and <code>|</code> delimiters automatically.</p></div>
+    <div class="card"><span class="ico">📅</span><h3>Real date logic</h3><p>ISO, <code>15/03/2026</code>, <code>03/15/2026</code>, <code>15-Mar-2026</code>. Rejects 31 February. Flags due dates that precede issue dates.</p></div>
+    <div class="card"><span class="ico">✅</span><h3>Arithmetic you can trust</h3><p>Verifies <code>subtotal + tax = total</code>, cross-checks the tax rate against the tax amount, and scores every row 0–100.</p></div>
+  </div>
+
+  <h2 id="how">What it catches</h2>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Silent mismatches</h3>
+      <p style="margin-bottom:10px">A row where the totals don't reconcile — the single most common cause of a rejected invoice run.</p>
+      <pre><span class="c">"subtotal": 1000.00, "tax": 200.00,</span>
+<span class="c">"total":    9999.00</span>
+<span class="n">→ ARITHMETIC_MISMATCH</span>
+  1000 + 200 ≠ 9999  <span class="s">(off by 8799.00)</span></pre>
+    </div>
+    <div class="card">
+      <h3>Wrong tax</h3>
+      <p style="margin-bottom:10px">A stated rate that doesn't produce the stated amount.</p>
+      <pre><span class="c">"subtotal":  1000.00,</span>
+<span class="c">"tax_rate":      20,</span>
+<span class="c">"tax":          100.00</span>
+<span class="n">→ TAX_RATE_MISMATCH</span>
+  20% of 1000 = 200 <span class="s">≠ 100</span></pre>
+    </div>
+    <div class="card">
+      <h3>Impossible dates</h3>
+      <p style="margin-bottom:10px">Calendar-invalid and internally contradictory dates.</p>
+      <pre><span class="c">"issued": "2026-02-31"</span>  <span class="n">→ rejected (Feb 31)</span>
+<span class="c">"issued": "2026-03-15",</span>
+<span class="c">"due":    "2026-02-01"</span>  <span class="n">→ BEFORE_ISSUE</span></pre>
+    </div>
+    <div class="card">
+      <h3>Mixed up columns</h3>
+      <p style="margin-bottom:10px">Header names it doesn't recognise are still mapped by fuzzy match, and anything unmapped is reported instead of guessed.</p>
+      <pre><span class="s">"Doc Number (old)" → invoice_number</span>
+<span class="s">"Supplier Name"   → vendor</span>
+<span class="s">"Grand Total"     → total</span>
+<span class="s">"CCY"             → currency</span></pre>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Deterministic by design.</strong> No model call means no hallucinated invoice numbers, no per-request token bill, and the same input always returns the same output — which is what makes it safe to run inside an accounting pipeline.
+  </div>
+
+  <h2 id="pricing">Pricing</h2>
+  <table>
+    <tbody>
+      <tr><td>Trial — <span class="free">25 calls</span><br><span style="color:var(--dim);font-size:13.5px">No card, no signup</span></td><td>$0</td></tr>
+      <tr><td>Starter — 100 calls</td><td>$5</td></tr>
+      <tr><td>Pro — 2,000 calls<br><span style="color:var(--dim);font-size:13.5px">Best value</span></td><td>$39</td></tr>
+      <tr><td>Scale — 15,000 calls</td><td>$199</td></tr>
+    </tbody>
+  </table>
+  <p style="color:var(--dim);font-size:14.5px;margin-top:14px">Pay with USDT. Credits land instantly on confirmation. <span class="tag">Binance ID 990584936</span></p>
+
+  <h2 id="try">Use it now</h2>
+  <pre><span class="c"># 1. get a key (25 free calls)</span>
+<span class="k">curl</span> -X POST http://localhost:8787/v1/keys
+
+<span class="c"># 2. normalize your file</span>
+<span class="k">curl</span> -X POST http://localhost:8787/v1/normalize \
+  -H <span class="s">"Authorization: Bearer dm_..."</span> \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"input": "Invoice Number,Invoice Date,Subtotal,Tax,Total\nINV-1,2026-01-05,1000.00,200.00,1200.00"}'</span></pre>
+  <p style="margin-top:16px"><a class="btn primary" href="/playground">Paste a file and see the output →</a></p>
+
+  <footer>
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <span>invoice.engine — deterministic invoice data</span>
+      <span><a href="/v1/ledger" style="color:var(--dim)">Public experiment ledger</a></span>
+    </div>
+  </footer>
+</div>
+<script>
+// Funnel tracking: which pages get seen is the only signal that says whether
+// distribution or the product is the problem. Failure is ignored on purpose —
+// telemetry must never block the page.
+function track(event, ref) {
+  try { fetch('/v1/metric', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({event, ref}) }); } catch (e) {}
+}
+track('landing_view', document.referrer ? new URL(document.referrer).hostname : 'direct');
+
+document.querySelectorAll('a[href="/playground"]').forEach(function (a) {
+  a.addEventListener('click', function () { track('playground_click', 'landing_cta'); });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# Render — blueprint. Connect this repo in the Render dashboard and it deploys as-is.
+# Note: the free tier has an EPHEMERAL filesystem. A persistent disk is strongly
+# recommended (add a "Disk" and mount it at /data) — otherwise every restart
+# invalidates live API keys and paid credits.
+services:
+  - type: web
+    name: invoice-engine
+    runtime: node
+    plan: free
+    buildCommand: ""
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8787
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATA_DIR
+        value: /data
+      # CHANGE THIS to your own payout ID before accepting payment.
+      - key: BINANCE_ID
+        value: 990584936

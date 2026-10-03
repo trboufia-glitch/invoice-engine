@@ -1,0 +1,16 @@
+node_modules/
+npm-debug.log*
+.env
+.env.*
+
+# Runtime state: API keys (hashed), credit balances, orders, experiment log.
+# Never commit this — a leaked store exposes live credentials and balances.
+data/store.json
+data/store.json.tmp
+data/store.json.corrupt-*
+data/experiments.jsonl
+
+*.log
+.DS_Store
+# one-off debugging scratch files
+scripts/probe*.js

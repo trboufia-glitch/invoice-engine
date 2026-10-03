@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playground — invoice.engine</title>
+<style>
+  :root{
+    --bg:#0a0c10; --panel:#11151c; --line:#1e2530; --fg:#e6edf6; --dim:#8b98ab;
+    --acc:#4ade80; --warn:#fbbf24; --err:#f87171; --info:#60a5fa;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  header{border-bottom:1px solid var(--line);padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+  .logo{font-family:var(--mono);font-weight:700}.logo span{color:var(--acc)}
+  a{color:var(--dim);text-decoration:none;font-size:14px}
+  main{max-width:1180px;margin:0 auto;padding:20px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column}
+  .phead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap}
+  h2{font-size:14px;margin:0;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);font-weight:600}
+  textarea{width:100%;min-height:290px;background:#07090c;border:1px solid var(--line);border-radius:9px;color:var(--fg);
+    font-family:var(--mono);font-size:12.5px;line-height:1.6;padding:13px;resize:vertical}
+  textarea:focus,input:focus{outline:1px solid var(--acc);border-color:var(--acc)}
+  input{background:#07090c;border:1px solid var(--line);border-radius:9px;color:var(--fg);padding:9px 12px;
+    font-family:var(--mono);font-size:13px;width:100%}
+  label{display:block;font-size:12.5px;color:var(--dim);margin:12px 0 5px}
+  .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  button{background:var(--acc);color:#04120a;border:0;border-radius:8px;padding:10px 18px;font-weight:700;font-size:14px;cursor:pointer}
+  button:hover{filter:brightness(1.08)}
+  button.sec{background:var(--panel);color:var(--fg);border:1px solid var(--line);font-weight:600}
+  button.sec:hover{border-color:var(--dim)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  pre{background:#07090c;border:1px solid var(--line);border-radius:9px;padding:13px;overflow:auto;
+    font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:0;flex:1;min-height:290px;max-height:560px;white-space:pre-wrap;word-break:break-word}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:11px}
+  .stat{background:#07090c;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:12.5px;font-family:var(--mono)}
+  .stat b{display:block;font-size:17px;font-family:-apple-system,sans-serif}
+  .ok{color:var(--acc)}.warn{color:var(--warn)}.err{color:var(--err)}.info{color:var(--info)}.dim{color:var(--dim)}
+  .msg{padding:10px 13px;border-radius:8px;font-size:13.5px;margin-bottom:11px;font-family:var(--mono)}
+  .msg.ok{background:rgba(74,222,128,.09);border:1px solid rgba(74,222,128,.3)}
+  .msg.err{background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.3)}
+  .msg.warn{background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.3)}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;margin-top:11px}
+  th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  th{color:var(--dim);font-weight:600;text-transform:uppercase;font-size:10.5px;letter-spacing:.5px}
+  .scroll{overflow-x:auto}
+  .samples{display:flex;gap:7px;flex-wrap:wrap}
+  .samples button{background:var(--panel);color:var(--dim);border:1px solid var(--line);padding:6px 11px;font-size:12.5px;font-weight:500;border-radius:20px}
+  .samples button:hover{color:var(--fg);border-color:var(--dim)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">invoice<span>.engine</span> <span class="dim" style="font-weight:400">playground</span></div>
+  <a href="/">← back</a>
+</header>
+
+<main>
+  <div class="row">
+    <button id="go" onclick="run()">Normalize</button>
+    <button class="sec" onclick="copyCmd()">Copy cURL</button>
+    <span class="dim" id="credits" style="font-size:13px;font-family:var(--mono)"></span>
+  </div>
+
+  <div class="row">
+    <input id="key" placeholder="API key — click “Free key” to mint 25 trial calls" style="flex:1;min-width:260px">
+    <button class="sec" onclick="mintKey()">Free key</button>
+  </div>
+
+  <div class="panel" style="margin-bottom:14px">
+    <div class="phead">
+      <h2>Sample data</h2>
+      <div class="samples">
+        <button onclick="sample(0)">Clean CSV</button>
+        <button onclick="sample(1)">Mismatched totals</button>
+        <button onclick="sample(2)">European decimals</button>
+        <button onclick="sample(3)">Receipt text</button>
+        <button onclick="sample(4)">Unknown headers</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="phead"><h2>Input</h2><span class="dim" id="insize" style="font-size:12px;font-family:var(--mono)"></span></div>
+      <textarea id="in" spellcheck="false" oninput="updSize()"></textarea>
+      <label>Options</label>
+      <div class="row" style="margin-bottom:0">
+        <select id="format" style="background:#07090c;border:1px solid var(--line);border-radius:8px;color:var(--fg);padding:9px 11px;font-family:var(--mono);font-size:13px">
+          <option value="auto">auto-detect format</option>
+          <option value="csv">csv / tsv</option>
+          <option value="text">free text</option>
+        </select>
+        <input id="tol" value="0.05" style="width:96px" title="Arithmetic tolerance">
+        <span class="dim" style="font-size:12.5px">tolerance</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="phead"><h2>Result</h2><span class="dim" id="timing" style="font-size:12px;font-family:var(--mono)"></span></div>
+      <div id="msg"></div>
+      <div class="stats" id="stats"></div>
+      <pre id="out">Ready. Paste a file or pick a sample above.</pre>
+      <div class="scroll" id="tbl"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+// Funnel tracking. A key mint is the strongest signal this product has: it means
+// someone decided the tool was worth an API call. Failures are ignored so
+// telemetry can never block the page.
+function track(event, ref) {
+  try { fetch('/v1/metric', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({event, ref}) }); } catch (e) {}
+}
+track('playground_view', document.referrer ? new URL(document.referrer).hostname : 'direct');
+
+const SAMPLES = [
+`Invoice Number,Invoice Date,Due Date,Vendor,Currency,Subtotal,Tax Rate,Tax,Total,Amount Due
+INV-1001,2026-01-05,2026-02-04,Acme Industrial,USD,1000.00,20,200.00,1200.00,1200.00
+INV-1002,2026-01-09,2026-03-09,Globex Components,USD,2500.00,8.25,206.25,2706.25,2706.25
+INV-1003,2026-01-22,2026-02-21,Initech LLC,GBP,430.50,20,86.10,516.60,516.60`,
+`Invoice Number,Invoice Date,Vendor,Currency,Subtotal,Tax,Total
+INV-2001,2026-01-05,Acme,USD,1000.00,200.00,9999.00
+INV-2002,2026-01-06,Globex,EUR,500.00,100.00,600.00
+INV-2003,2026-02-31,Broken Co,USD,300.00,0.00,300.00
+INV-2004,2026-01-09,Tax Cheat,USD,1000.00,100.00,1120.00
+INV-2005,2026-01-11,Bad Dates,USD,200.00,40.00,240.00`,
+`Invoice No;Date;Due;Supplier;Currency;Net;VAT;Gross
+R-77;15.03.2026;14.04.2026;Müller GmbH;EUR;1.000,00;190,00;1.190,00
+R-78;16.03.2026;15.04.2026;Atelier Bernard;EUR;2.500,50;475,10;2.975,60
+R-79;18.03.2026;17.04.2026;Société Générale;EUR;999,99;199,998;1.199,988`,
+`NORTHWIND SUPPLY CO.
+Receipt #: 8891
+Date: 2026-02-10
+
+2x Widget A          12.50
+3x Widget B          40.00
+1x Large Casing     199.99
+
+Subtotal: $279.99
+VAT 20%: $55.998
+TOTAL DUE: $335.99`,
+`Doc Number (old),Date Issued,Supplier Name,CCY,Net Amount,VAT Amount,Grand Total
+INV-55,2026-02-02,Zenith Trading,GBP,400.00,80.00,480.00
+INV-56,2026-02-03,Kestrel Ltd,GBP,1250.00,250.00,1500.00`,
+];
+
+function sample(i){ $('in').value = SAMPLES[i]; updSize(); $('out').textContent = 'Ready.'; $('stats').innerHTML=''; $('tbl').innerHTML=''; $('msg').innerHTML=''; }
+
+function updSize(){
+  const n = $('in').value.length;
+  $('insize').textContent = n ? n.toLocaleString() + ' chars' : '';
+}
+
+async function mintKey(){
+  const r = await fetch('/v1/keys', {method:'POST'});
+  if (!r.ok) { show('err', 'Could not mint a key (rate limited?)'); return; }
+  const d = await r.json();
+  $('key').value = d.api_key;
+  track('key_minted', d.key_id);
+  show('ok', `Key created — ${d.credits} trial calls. Save it now, it cannot be recovered.`);
+  updateCredits(d.credits);
+}
+
+function updateCredits(c){ $('credits').textContent = c === null || c === undefined ? '' : c + ' credits left'; }
+
+function show(kind, text){ $('msg').innerHTML = `<div class="msg ${kind}">${escapeHtml(text)}</div>`; }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function copyCmd(){
+  const key = $('key').value || 'dm_YOUR_KEY';
+  const cmd = `curl -X POST ${location.origin}/v1/normalize \\\n  -H "Authorization: Bearer ${key}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"input": ${JSON.stringify($('in').value.slice(0,200))}}'`;
+  navigator.clipboard.writeText(cmd).then(()=> show('ok','cURL copied to clipboard.'));
+}
+
+async function run(){
+  const input = $('in').value;
+  const key = $('key').value.trim();
+  if (!input.trim()) { show('err','Paste some data first — or click a sample above.'); return; }
+  if (!key) { show('warn','No API key. Click “Free key” to mint 25 trial calls.'); return; }
+
+  $('go').disabled = true; $('go').textContent = 'Working…';
+  $('msg').innerHTML=''; $('stats').innerHTML=''; $('tbl').innerHTML='';
+  const t0 = performance.now();
+
+  try {
+    const r = await fetch('/v1/normalize', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body: JSON.stringify({ input, format:$('format').value, tolerance: parseFloat($('tol').value) || 0.05 }),
+    });
+    const d = await r.json();
+    const wall = Math.round(performance.now() - t0);
+
+    if (r.status === 402) {
+      show('err', 'Out of credits. Top up from the pricing page — this is the paywall working as designed.');
+      $('out').textContent = JSON.stringify(d, null, 2);
+      $('go').disabled = false; $('go').textContent = 'Normalize';
+      return;
+    }
+    if (!r.ok) { show('err', `${r.status} ${d.error || 'request failed'}`); $('out').textContent = JSON.stringify(d,null,2); $('go').disabled=false; $('go').textContent='Normalize'; return; }
+
+    updateCredits(d.credits_remaining);
+    $('timing').textContent = `${wall} ms round-trip · ${d.billed_ms} ms parse`;
+
+    const s = d.summary;
+    $('stats').innerHTML = `
+      <div class="stat"><b>${d.row_count}</b>rows</div>
+      <div class="stat"><b class="${s.errors?'err':'ok'}">${s.errors}</b>errors</div>
+      <div class="stat"><b class="${s.warnings?'warn':'ok'}">${s.warnings}</b>warnings</div>
+      <div class="stat"><b>${s.avg_score}</b>avg score</div>
+      <div class="stat"><b class="dim" style="font-size:13px">${d.format}</b>format</div>`;
+
+    if (s.errors) show('err', `${s.errors} blocking error(s) — this data is not safe to file.`);
+    else if (s.warnings) show('warn', `No blocking errors, ${s.warnings} warning(s) to review.`);
+    else show('ok', `Clean. ${d.row_count} row(s) passed every check.`);
+
+    // Pretty top-level view, records table below
+    const { records, issues, ...rest } = d;
+    $('out').textContent = JSON.stringify(rest, null, 2);
+    renderTable(records);
+  } catch (e) {
+    show('err', 'Network error: ' + e.message);
+  }
+  $('go').disabled = false; $('go').textContent = 'Normalize';
+}
+
+function renderTable(records){
+  if (!records || !records.length) { $('tbl').innerHTML=''; return; }
+  const cols = ['invoice_number','issued_date','due_date','vendor','currency','subtotal','tax','tax_rate','total','score'];
+  const show = cols.filter(c => records.some(r => r[c] !== null && r[c] !== undefined));
+  let h = '<table><thead><tr>' + show.map(c => `<th>${c}</th>`).join('') + '<th>issues</th></tr></thead><tbody>';
+  for (const r of records.slice(0,50)) {
+    h += '<tr>' + show.map(c => `<td>${r[c] === null || r[c] === undefined ? '<span class="dim">—</span>' : escapeHtml(r[c])}</td>`).join('');
+    const bad = (r.issues||[]).filter(i => i.severity === 'error');
+    const wrn = (r.issues||[]).filter(i => i.severity === 'warning');
+    h += `<td>${bad.length ? `<span class="err">${bad.length} error</span>` : wrn.length ? `<span class="warn">${wrn.length} warn</span>` : '<span class="ok">clean</span>'}</td></tr>`;
+  }
+  h += '</tbody></table>';
+  if (records.length > 50) h += `<div class="dim" style="font-size:12px;margin-top:8px">showing 50 of ${records.length} rows</div>`;
+  $('tbl').innerHTML = h;
+}
+
+sample(0);
+</script>
+</body>
+</html>
