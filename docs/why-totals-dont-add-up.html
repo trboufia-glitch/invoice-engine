@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why my invoice totals don't add up — and how to find the bad row</title>
+<meta name="description" content="If subtotal plus tax does not equal your invoice total, the file is wrong, not the spreadsheet. Here are the five real causes, how to find the offending row, and a free checker.">
+<style>
+  :root{--bg:#0a0c10;--panel:#11151c;--line:#1e2530;--fg:#e6edf6;--dim:#8b98ab;--acc:#4ade80;--warn:#fbbf24;--err:#f87171;--mono:ui-monospace,Menlo,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.68 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px}
+  header{border-bottom:1px solid var(--line);padding:20px 0}
+  .logo{font-family:var(--mono);font-weight:700}.logo span{color:var(--acc)}
+  h1{font-size:clamp(27px,4.6vw,38px);line-height:1.16;margin:38px 0 14px;letter-spacing:-1.2px}
+  h2{font-size:22px;margin:42px 0 12px;letter-spacing:-.5px;padding-top:8px}
+  h3{font-size:17px;margin:26px 0 8px}
+  p{margin:0 0 15px}
+  .lede{color:var(--dim);font-size:18.5px}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin:26px 0;font-size:15px}
+  .toc ol{margin:8px 0 0;padding-left:20px;color:var(--dim)}
+  .toc a{color:var(--acc);text-decoration:none}
+  .cause{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:0 11px 11px 0;padding:16px 19px;margin:18px 0}
+  .cause h3{margin:0 0 8px}
+  .cause p{margin:0 0 10px;color:var(--dim);font-size:15px}
+  .cause p:last-child{margin:0}
+  code{font-family:var(--mono);font-size:14px;background:#07090c;padding:2px 7px;border-radius:5px;border:1px solid var(--line);color:#c9d6e5}
+  pre{background:#07090c;border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6;color:#c9d6e5;margin:16px 0}
+  .fix{color:var(--acc);font-family:var(--mono);font-size:13.5px;margin-top:10px}
+  table{width:100%;border-collapse:collapse;font-size:15px;margin:16px 0}
+  td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  td:first-child{font-family:var(--mono);font-size:13.5px;color:var(--acc2);white-space:nowrap}
+  .cta{background:linear-gradient(180deg,rgba(74,222,128,.09),rgba(74,222,128,.03));border:1px solid rgba(74,222,128,.35);border-radius:14px;padding:24px;margin:34px 0}
+  .cta h2{margin:0 0 10px}
+  .cta p{color:var(--dim)}
+  .btn{display:inline-block;padding:13px 23px;border-radius:9px;text-decoration:none;font-weight:700;font-size:15.5px;background:var(--acc);color:#04120a;margin:8px 8px 0 0}
+  .btn.sec{background:var(--panel);color:var(--fg);border:1px solid var(--line)}
+  .badge{display:inline-block;font-family:var(--mono);font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid var(--line);color:var(--dim);margin-right:6px}
+  ul{padding-left:22px}
+  li{margin:7px 0}
+  footer{border-top:1px solid var(--line);margin-top:44px;padding:22px 0;color:var(--dim);font-size:14.5px}
+  a{color:var(--acc)}
+  .tl{color:var(--dim);font-size:15px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="logo">invoice<span>.engine</span></div></header>
+
+  <h1>Why your invoice totals don't add up</h1>
+  <p class="lede">If <code>subtotal + tax ≠ total</code>, the file is wrong — not the spreadsheet, not your arithmetic. There are five causes, and they are easy to tell apart.</p>
+
+  <div class="toc">
+    <b>In this article</b>
+    <ol>
+      <li><a href="#c1">The VAT line was blank and read as zero</a></li>
+      <li><a href="#c2">The tax rate doesn't match the tax amount</a></li>
+      <li><a href="#c3">The discount was applied twice, or not at all</a></li>
+      <li><a href="#c4">European decimals got parsed as thousands separators</a></li>
+      <li><a href="#c5">The semicolon export lost its delimiters</a></li>
+      <li><a href="#find">How to find the offending row in seconds</a></li>
+    </ol>
+  </div>
+
+  <h2 id="c1">1. The VAT line was blank and read as zero</h2>
+  <div class="cause">
+    <h3>What it looks like</h3>
+    <p>The total is short by exactly the tax you expected. Nothing looks broken.</p>
+    <p>A client sends an invoice where the VAT cell is empty — a data-export fault on their side, or a partial save. Any spreadsheet treats an empty cell as zero, so the invoice quietly under-charges. It passes every visual check and fails only at the return.</p>
+    <p>This is the most common and most expensive of the five, because the total stays plausible.</p>
+    <p class="fix">Fix: treat an empty cell as <i>missing</i>, never as zero. If total − subtotal ≠ the tax you expect, the tax field is absent — not zero.</p>
+  </div>
+
+  <h2 id="c2">2. The stated rate doesn't match the stated amount</h2>
+  <div class="cause">
+    <h3>What it looks like</h3>
+    <p>The invoice says 20% but the amount is wrong for 20%.</p>
+    <pre>subtotal   1,000.00
+VAT 20%      100.00     ← should be 200.00
+total       1,100.00   ← internally consistent, externally wrong</pre>
+    <p>The invoice adds up perfectly. It is simply charging the wrong tax, which makes it non-compliant even though it reconciles.</p>
+    <p class="fix">Fix: recompute the rate from the figures — <code>tax ÷ subtotal</code> — and compare it to the rate printed on the document.</p>
+  </div>
+
+  <h2 id="c3">3. The discount was applied twice, or not at all</h2>
+  <div class="cause">
+    <h3>What it looks like</h3>
+    <p>The total is off by a round percentage and the tax looks proportionally wrong too.</p>
+    <p>Discounts get applied at the line level, at the invoice level, or both — and exports don't always agree about which. When tax is computed on a discounted subtotal but the total subtracts the discount twice, the row no longer reconciles.</p>
+    <p class="fix">Fix: recompute from the line items, not from the stated total. If the sum of lines + tax ≠ total, the discrepancy is in the discount logic.</p>
+  </div>
+
+  <h2 id="c4">4. European decimals parsed as thousands separators</h2>
+  <div class="cause">
+    <h3>What it looks like</h3>
+    <p>Totals are off by a factor of a thousand, and only for some suppliers.</p>
+    <p>A German or French export writes <code>1.234,56</code>. A parser that assumes the US convention reads the dot as a thousands separator and gets <code>1234.56</code> — or worse, strips punctuation and gets <code>123456</code>. The same supplier's invoices then fail while everyone else's pass.</p>
+    <p>Related: <code>1 234,56</code> with a space, and the Swiss <code>1'234.50</code> with an apostrophe.</p>
+    <p class="fix">Fix: parse on the <i>last</i> separator, not the first. Whichever of <code>.</code> or <code>,</code> comes last is the decimal point.</p>
+  </div>
+
+  <h2 id="c5">5. The semicolon export lost its delimiters</h2>
+  <div class="cause">
+    <h3>What it looks like</h3>
+    <p>Every column has landed in the wrong field — invoice numbers containing dates, totals containing vendor names.</p>
+    <p>Locales that use a comma as the decimal separator also use a semicolon as the field separator. A parser that hardcodes <code>,</code> reads the entire row as one cell. Nothing errors; you just get garbage that looks structurally valid.</p>
+    <p>This one is worth checking for specifically, because it silently corrupts <i>every</i> row from that supplier while leaving the file readable.</p>
+    <p class="fix">Fix: detect the delimiter per file before splitting. Count candidates on the first few lines and use the winner.</p>
+  </div>
+
+  <h2 id="find">How to find the offending row</h2>
+  <p>You do not need to inspect anything by hand. The check is one subtraction per row:</p>
+  <table>
+    <tr><td>subtotal + tax</td><td>must equal <code>total</code>, within a small tolerance for rounding</td></tr>
+    <tr><td>tax ÷ subtotal</td><td>must equal the stated rate</td></tr>
+    <tr><td>due date</td><td>must not precede the issue date</td></tr>
+    <tr><td>issue date</td><td>must be a real calendar date</td></tr>
+  </table>
+
+  <p>A tolerance of about <code>0.05</code> avoids false alarms on rounding. Anything larger is a real discrepancy worth chasing.</p>
+
+  <div class="cta">
+    <h2>Check your file</h2>
+    <p>Paste a CSV export or receipt text. It finds every row that doesn't reconcile and shows the numbers side by side. It runs entirely in your browser tab — nothing is uploaded, no signup, free with no limits.</p>
+    <a class="btn" href="./index.html">Open the checker →</a>
+    <a class="btn sec" href="./pricing.html">Why it's free</a>
+    <p style="margin-top:16px;font-size:14.5px">
+      <span class="badge">deterministic</span>
+      <span class="badge">no LLM</span>
+      <span class="badge">1.234,56 handled</span>
+      <span class="badge">; and tab delimited</span>
+    </p>
+  </div>
+
+  <h2>What it will not do</h2>
+  <p>Being straight about the limits saves more time than it costs:</p>
+  <ul>
+    <li><b>It cannot read a scanned PDF.</b> It takes text and CSV, not images. A PDF needs OCR or a text layer first.</li>
+    <li><b>It does not know your tax rules.</b> It checks internal consistency, not whether the rate is the correct rate for your jurisdiction.</li>
+    <li><b>It does not post anything.</b> It tells you what is wrong; what you do about it is yours.</li>
+  </ul>
+
+  <footer>
+    <a href="./index.html">Free invoice checker</a> ·
+    <a href="./api.html">API docs</a> ·
+    <a href="https://github.com/trboufia-glitch/invoice-engine">Source</a><br>
+    Built as a deterministic engine — regex and arithmetic, so no invoice number is ever
+    invented and identical input always gives identical output.
+  </footer>
+</div>
+</body>
+</html>

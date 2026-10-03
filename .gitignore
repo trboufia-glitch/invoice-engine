@@ -9,6 +9,8 @@ data/store.json
 data/store.json.tmp
 data/store.json.corrupt-*
 data/experiments.jsonl
+data/outreach/
+data/site.json
 
 *.log
 .DS_Store
