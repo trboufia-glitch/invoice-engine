@@ -85,10 +85,10 @@ here is secret, but there is no reason to publish your payment details.
 ## Verify after deploy
 
 ```
-curl https://YOUR_URL/health
-open  https://YOUR_URL/playground      # click "Mismatched totals" → expect 3 errors
-open  https://YOUR_URL/v1/ledger       # must NOT be empty (the seed ships in the image)
-open  https://YOUR_URL/v1/funnel       # should show landing_view/playground_view
+curl https://https://invoice-checker-ie.surge.sh/health
+open  https://https://invoice-checker-ie.surge.sh/playground      # click "Mismatched totals" → expect 3 errors
+open  https://https://invoice-checker-ie.surge.sh/v1/ledger       # must NOT be empty (the seed ships in the image)
+open  https://https://invoice-checker-ie.surge.sh/v1/funnel       # should show landing_view/playground_view
 ```
 
 If `/v1/ledger` is empty, `seed/` did not make it into the image — check the Dockerfile

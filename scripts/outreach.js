@@ -162,15 +162,33 @@ function emails(url) {
   console.log('\n  ' + path.relative(path.join(__dirname, '..'), sheetFile));
 }
 
+/**
+ * Reads the canonical URL written by set_url.js. Falling back to the placeholder
+ * and printing a warning is deliberate: an email that goes out with
+ * "YOUR_URL" in the body is worse than one that never gets sent.
+ */
+function siteUrl() {
+  const file = path.join(__dirname, '..', 'data', 'site.json');
+  if (fs.existsSync(file)) {
+    try { return JSON.parse(fs.readFileSync(file, 'utf8')).url; } catch { /* fall through */ }
+  }
+  return 'YOUR_URL';
+}
+
 function main() {
   const mode = process.argv[2] || '--list';
-  const url = 'YOUR_URL';
+  const url = siteUrl();
 
   if (mode === '--list') { list(); return; }
   if (mode === '--emails') {
-    console.log('\n  Writing outreach emails (URL still a placeholder — run set_url.js after deploy)\n');
+    if (url === 'YOUR_URL') {
+      console.error('Refusing to write emails with an unresolved placeholder.');
+      console.error('Run: node scripts/set_url.js <your-live-url>   first.');
+      process.exit(1);
+    }
+    console.log(`\n  Writing outreach emails for ${url}\n`);
     emails(url);
-    console.log('\n  Now: node scripts/set_url.js <your-live-url>   # fills in the link\n');
+    console.log(`\n  Now: node scripts/set_url.js <new-url> && node scripts/outreach.js --emails\n`);
     return;
   }
   console.error('usage: node scripts/outreach.js --list | --emails');
