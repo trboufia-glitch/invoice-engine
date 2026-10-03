@@ -9,6 +9,41 @@ tool. Lead with the pain, not the API.
 
 ---
 
+## 0. The fastest distribution asset: the client-side tool
+
+`docs/` is a complete invoice checker that runs **entirely in the visitor's browser** — no
+signup, no API key, no backend, nothing uploaded. Host it anywhere and it works.
+
+This beats the hosted API for reach: the API demands a key and a plan before anyone sees a
+result, so it loses people at the first step. The browser tool answers in five seconds.
+The API is what you sell to the people who liked it.
+
+### Deploying it (zero cost)
+
+GitHub Pages is **unavailable on free accounts** (`422: Your current plan does not support
+GitHub Pages for this repository`), so use surge.sh:
+
+```bash
+npm install -g surge
+cd docs
+surge . invoice-checker.surge.sh
+```
+
+It prompts to create an account inline (email + password) — that prompt is yours to
+complete. Free forever, HTTPS on the subdomain, unlimited deploys. Every publish is an
+immutable revision and `surge rollback` reverts globally.
+
+Alternatives: Netlify Drop (drag the folder, no account to start) or Cloudflare Pages
+(unlimited bandwidth).
+
+Before uploading, confirm the generated bundle still works:
+
+```bash
+node scripts/build_browser.js    # parses + smoke-tests the bundle, exits non-zero on failure
+```
+
+---
+
 ## 1. Hacker News — Show HN
 
 Title (72 chars max, no marketing):
@@ -25,17 +60,20 @@ I built a small API for this. You paste a CSV export (or raw receipt text), and 
 returns clean JSON plus every row where subtotal + tax ≠ total, where the stated tax
 rate doesn't match the tax amount, or where the due date precedes the issue date.
 
-It's fully deterministic — regex and arithmetic, no LLM. Same input, same output, which
-matters when the result is feeding an accounting pipeline. It also handles the locale
-stuff that breaks naive parsers: 1.234,56 vs 1,234.56, semicolon and tab delimiters,
-15-Mar-2026, and it rejects 2026-02-31 instead of rolling it over.
+It's fully deterministic — regex and arithmetic, no LLM. Same input, same output,
+which matters when the result is feeding an accounting pipeline. It also handles the
+locale stuff that breaks naive parsers: 1.234,56 vs 1,234.56, semicolon and tab
+delimiters, 15-Mar-2026. And it rejects 2026-02-31 instead of rolling it over.
 
-Free playground, no signup: YOUR_URL/playground
-API docs: YOUR_URL
+It runs entirely in your browser tab, so nothing is uploaded, no signup, no key:
+YOUR_URL
 
-Every bug I hit while building it is written up at YOUR_URL/v1/ledger — including the
-one where my CSV splitter was hardcoded to commas and silently destroyed every
-European export.
+The interesting part for me was the bugs. My CSV splitter was hardcoded to commas, so
+every European export collapsed into a single column — silent corruption on half the
+market. My regex for "total" matched inside "Subtotal". An empty cell parsed as 0, which
+manufactured fake warnings. All written up at YOUR_URL/ledger.
+
+What invoice-format edge cases am I still missing?
 
 I'm curious what invoice-format edge cases I'm still missing.
 ```
@@ -56,7 +94,8 @@ raw text of a PDF invoice) and it gives you back clean data plus a list of rows 
 don't add up: subtotal + tax ≠ total, stated tax rate doesn't match the tax amount,
 due date before issue date, impossible dates like Feb 31.
 
-Free, no signup, nothing stored: YOUR_URL/playground
+Free, no signup, and it runs in the browser tab — your file is not uploaded anywhere:
+YOUR_URL
 
 The reason I built it: a client sent 40 invoices where the tax line was blank on six
 of them. The total still looked plausible, so it wasn't caught until the return was
@@ -77,7 +116,7 @@ If you export invoices from QuickBooks, Xero, Shopify or Stripe and then do anyt
 with that file in Excel — sort, split, re-import — small errors slip through. A VAT
 line that doesn't match the rate, a subtotal that doesn't reconcile with the total.
 
-Free tool, no signup, paste and go: YOUR_URL/playground
+Free, paste and go, runs in your browser so nothing is uploaded: YOUR_URL
 
 It flags the exact rows with the numbers side by side so you can see the discrepancy.
 You paste the file; nothing is stored or uploaded anywhere.
@@ -141,7 +180,7 @@ rate that doesn't match the amount, a total that doesn't reconcile with the
 subtotal. Nothing flags it until the return is rejected.
 
 You paste the file, it lists the rows that don't add up with the numbers side by side.
-No signup, nothing stored: YOUR_URL/playground
+Runs in your browser, nothing uploaded, no signup: YOUR_URL
 
 If your last quarter had a rejected return for a maths error, it's worth ten seconds
 to try it on this quarter's export. If not, ignore this — no follow-up.
@@ -156,10 +195,22 @@ to try it on this quarter's export. If not, ignore this — no follow-up.
 | Channel | Why | Effort |
 |---|---|---|
 | Reddit r/Bookkeeping | Highest concentration of the exact pain | 15 min |
+| Direct outreach ×20 | Slowest to start, most likely to produce a real customer | 2 hours |
 | Indie Hackers | Founder audience, gives technical feedback | 10 min |
 | Hacker News | Traffic if it hits, near-zero if it doesn't | 15 min |
-| Direct outreach ×20 | Slowest to start, most likely to produce a real customer | 2 hours |
 | r/smallbusiness, r/Accounting | Broad, more noise, test messaging here | 10 min |
+
+---
+
+## Rules that protect the account
+
+- **Post from your real account, never a throwaway.** HN filters new accounts hard; Reddit
+  bans pattern-identical first-day posts instantly.
+- **One link per post, one honest description, no cross-posting the same text within a
+  day.** Reposting identical copy to four subreddits is the surest way to be flagged.
+- **No affiliate links, no referral codes, no tracking parameters.**
+- **Disclose the affiliation** — "I built this" — in the first line, not a footnote.
+- If a post is removed, ask the moderators. Do not repost.
 
 ---
 
