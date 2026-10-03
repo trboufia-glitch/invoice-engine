@@ -6,9 +6,12 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/normalize.test.js && node tests/e2e.test.js",
+    "test": "node tests/normalize.test.js && node tests/e2e.test.js && node tests/docs.test.js && node tests/browser-page.test.js",
     "test:unit": "node tests/normalize.test.js",
     "test:e2e": "node tests/e2e.test.js",
+    "test:docs": "node tests/docs.test.js",
+    "test:page": "node tests/browser-page.test.js",
+    "build:browser": "node scripts/build_browser.js",
     "ledger": "node scripts/log_experiments.js"
   },
   "engines": {

@@ -112,8 +112,9 @@ first is never "what else should I build" — it is which of these steps is losi
 lib/normalize.js    parsing + validation core (no I/O, no deps)
 lib/store.js        API keys, credit ledger, orders, experiment log
 server.js           HTTP layer: auth, metering, checkout
-public/             landing page + playground
-tests/              unit and live-server end-to-end suites
+public/             landing page + playground (server-hosted)
+docs/               browser-only site: index.html, pricing.html, api.html + generated bundle
+tests/              unit, live-server e2e, docs-fidelity, browser-page suites
 data/               store.json (keys/orders), experiments.jsonl (ledger)
 ```
 
@@ -132,8 +133,9 @@ a corrupt store is moved aside rather than crashing the service.
 
 Built and verified: the engine, the API, auth, metering, checkout, settlement safety, the
 landing page, the playground, the Docker/Railway/Render deployment files and the
-distribution copy. **63/63 tests green** (31 unit + 32 end-to-end against a live server),
-plus live browser verification of the pages and funnel tracking.
+distribution copy. **91/91 tests green** (31 unit, 32 end-to-end against a live server, 18 asserting the
+API docs match real output, 10 exercising the browser page's export helpers), plus live
+browser verification of the pages and funnel tracking.
 
 **Not done, and the reason is your accounts, not effort:**
 

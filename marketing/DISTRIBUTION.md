@@ -36,11 +36,18 @@ immutable revision and `surge rollback` reverts globally.
 Alternatives: Netlify Drop (drag the folder, no account to start) or Cloudflare Pages
 (unlimited bandwidth).
 
-Before uploading, confirm the generated bundle still works:
+Before uploading, confirm the generated bundle and the page still work:
 
 ```bash
 node scripts/build_browser.js    # parses + smoke-tests the bundle, exits non-zero on failure
+npm run test:page                # exercises the page's export helpers headlessly
 ```
+
+The page offers two downloads: the full checked dataset as JSON, and a CSV containing only
+the rows that need attention (`!` marks an error, `?` a warning). **That export is the
+conversion mechanism** — a free tool that only paints a table on screen sends the work back
+to Excel, so people leave with nothing to show their boss. Check the bundle after every
+change; it is generated code and it can drift.
 
 ---
 

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API docs — invoice.engine</title>
+<meta name="description" content="Deterministic invoice and CSV validation API. One POST returns clean records plus every row where subtotal plus tax does not equal total.">
+<style>
+  :root{--bg:#0a0c10;--panel:#11151c;--line:#1e2530;--fg:#e6edf6;--dim:#8b98ab;--acc:#4ade80;--warn:#fbbf24;--err:#f87171;--mono:ui-monospace,Menlo,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:15.5px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  .wrap{max-width:940px;margin:0 auto;padding:0 20px}
+  header{border-bottom:1px solid var(--line);padding:22px 0}
+  .logo{font-family:var(--mono);font-weight:700}.logo span{color:var(--acc)}
+  h1{font-size:clamp(25px,4vw,34px);margin:38px 0 10px;letter-spacing:-1px}
+  h2{font-size:21px;margin:38px 0 12px;letter-spacing:-.4px}
+  h3{font-size:16px;margin:22px 0 8px}
+  .sub{color:var(--dim);font-size:17px}
+  pre{background:#07090c;border:1px solid var(--line);border-radius:10px;padding:15px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6;color:#c9d6e5;margin:12px 0}
+  .k{color:#7ee787}.s{color:#a5d6ff}.c{color:#ffd580}.n{color:#ff7b72}.d{color:#8b98ab}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin:12px 0}
+  td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  td:first-child{font-family:var(--mono);font-size:13px;color:var(--acc2);white-space:nowrap;width:1%}
+  .m{font-family:var(--mono);font-size:11.5px;padding:2px 7px;border-radius:5px;border:1px solid var(--line)}
+  .get{color:#7ee787}.post{color:#ffd580}
+  .box{border:1px solid var(--line);border-radius:11px;padding:15px 17px;margin:18px 0;background:var(--panel)}
+  .box.warn{border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.06)}
+  code{font-family:var(--mono);font-size:13px;background:#07090c;padding:1px 6px;border-radius:4px;border:1px solid var(--line)}
+  a{color:var(--acc)}
+  .btn{display:inline-block;padding:11px 19px;border-radius:9px;text-decoration:none;font-weight:700;font-size:14.5px;background:var(--acc);color:#04120a;margin:8px 8px 0 0}
+  .btn.sec{background:var(--panel);color:var(--fg);border:1px solid var(--line)}
+  ul{padding-left:20px;color:var(--dim)}
+  li{margin:5px 0}
+  footer{border-top:1px solid var(--line);margin-top:42px;padding:22px 0;color:var(--dim);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="logo">invoice<span>.engine</span> <span style="color:var(--dim);font-weight:400">/ api</span></div></header>
+
+  <h1>Invoice validation API</h1>
+  <p class="sub">One POST turns a messy CSV export or raw receipt text into clean JSON records, with every row that fails to reconcile flagged and its <code>source_row</code> reported.</p>
+
+  <a class="btn" href="#quickstart">Quickstart</a>
+  <a class="btn sec" href="./index.html">Free browser version</a>
+  <a class="btn sec" href="./pricing.html">Pricing</a>
+
+  <div class="box">
+    <b>Start with 25 free calls — no card, no signup:</b>
+    <pre><span class="k">curl</span> -X POST YOUR_HOST/v1/keys
+<span class="d"># → {"api_key":"dm_…","credits":25}</span></pre>
+  </div>
+
+  <h2 id="quickstart">Quickstart</h2>
+  <pre><span class="k">curl</span> -X POST YOUR_HOST/v1/normalize \
+  -H <span class="s">"Authorization: Bearer dm_..."</span> \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{
+    "input": "Invoice Number,Currency,Subtotal,Tax,Total\nINV-1,USD,1000.00,200.00,9999.00",
+    "format": "auto"
+  }'</span></pre>
+
+  <pre><span class="c">// response (abridged — issues shown are two of the three warnings plus the error)</span>
+{
+  <span class="k">"ok"</span>: false,
+  <span class="k">"row_count"</span>: 1,
+  <span class="k">"summary"</span>: { <span class="k">"errors"</span>: 1, <span class="k">"warnings"</span>: 3, <span class="k">"avg_score"</span>: 54 },
+  <span class="k">"records"</span>: [
+    {
+      <span class="k">"invoice_number"</span>: <span class="s">"INV-1"</span>,
+      <span class="k">"issued_date"</span>: null, <span class="k">"due_date"</span>: null, <span class="k">"vendor"</span>: null,
+      <span class="k">"currency"</span>: <span class="s">"USD"</span>,
+      <span class="k">"subtotal"</span>: 1000, <span class="k">"tax"</span>: 200, <span class="k">"total"</span>: 9999,
+      <span class="k">"score"</span>: 54,
+      <span class="k">"issues"</span>: [
+        { <span class="k">"field"</span>: <span class="s">"total"</span>, <span class="k">"code"</span>: <span class="s">"ARITHMETIC_MISMATCH"</span>,
+          <span class="k">"severity"</span>: <span class="s">"error"</span>, <span class="k">"source_row"</span>: 2,
+          <span class="k">"message"</span>: <span class="s">"subtotal 1000 + tax 200 = 1200 but total is 9999 (off by 8799)"</span> },
+        { <span class="k">"field"</span>: <span class="s">"issued_date"</span>, <span class="k">"code"</span>: <span class="s">"MISSING"</span>,
+          <span class="k">"severity"</span>: <span class="s">"warning"</span>, <span class="k">"source_row"</span>: 2,
+          <span class="k">"message"</span>: <span class="s">"issued_date not found"</span> }
+      ]
+    }
+  ],
+  <span class="k">"elapsed_ms"</span>: 0.8,
+  <span class="k">"credits_remaining"</span>: 24
+}</pre>
+
+  <div class="box warn">
+    <b>Use the <code>summary.errors</code> count, not the HTTP status.</b> A file with bad rows
+    still returns <code>200</code> — the request succeeded, the data is what failed. Exiting on
+    <code>summary.errors &gt; 0</code> is the whole integration.
+  </div>
+
+  <h3>Clean row</h3>
+  <pre><span class="c">// input where 1000.00 + 200.00 = 1200.00</span>
+{ <span class="k">"ok"</span>: true, <span class="k">"row_count"</span>: 1,
+  <span class="k">"summary"</span>: { <span class="k">"errors"</span>: 0, <span class="k">"warnings"</span>: 3, <span class="k">"avg_score"</span>: 79 } }</pre>
+
+  <p style="color:var(--dim);font-size:14.5px">That still shows 3 warnings, because the columns above
+  have no dates or vendor. Warnings are missing <em>optional</em> context, not defects — the row
+  still returns <code>ok: true</code>. A row scores 100 once every expected field is present:</p>
+
+  <pre><span class="c">// input: Invoice Number,Invoice Date,Due Date,Vendor,Currency,Subtotal,Tax,Total</span>
+{ <span class="k">"ok"</span>: true, <span class="k">"summary"</span>: { <span class="k">"errors"</span>: 0, <span class="k">"warnings"</span>: 0, <span class="k">"avg_score"</span>: 100 } }</pre>
+
+  <h2>Endpoints</h2>
+  <table>
+    <tr><td><span class="m get">GET</span></td><td><code>/health</code></td><td>Liveness and the public experiment ledger summary.</td></tr>
+    <tr><td><span class="m get">GET</span></td><td><code>/v1/plans</code></td><td>Pricing, free trial size, payout ID.</td></tr>
+    <tr><td><span class="m get">GET</span></td><td><code>/v1/ledger</code></td><td>Every build experiment, cost and revenue, including failures.</td></tr>
+    <tr><td><span class="m post">POST</span></td><td><code>/v1/keys</code></td><td>Mint a key. Returns the plaintext <b>once</b>; only a hash is stored.</td></tr>
+    <tr><td><span class="m post">POST</span></td><td><code>/v1/normalize</code></td><td>The product. Auth required, 1 credit per call.</td></tr>
+    <tr><td><span class="m get">GET</span></td><td><code>/v1/usage</code></td><td>Plan, remaining credits, lifetime calls.</td></tr>
+    <tr><td><span class="m post">POST</span></td><td><code>/v1/orders?plan=pro</code></td><td>Create a payment order for a plan.</td></tr>
+    <tr><td><span class="m post">POST</span></td><td><code>/v1/orders/:id/confirm</code></td><td>Settle with <code>{"tx_ref":"0x…"}</code>. Idempotent.</td></tr>
+  </table>
+
+  <h2>Request body — <code>POST /v1/normalize</code></h2>
+  <table>
+    <tr><td>input</td><td><b>string, required.</b> Raw CSV/TSV or free text. Also accepted as <code>csv</code> or <code>text</code>.</td></tr>
+    <tr><td>format</td><td><code>auto</code> (default), <code>csv</code>, or <code>text</code>.</td></tr>
+    <tr><td>tolerance</td><td>Arithmetic slack in currency units. Default <code>0.05</code>.</td></tr>
+    <tr><td>max_rows</td><td>Default 5,000, capped at 25,000. <code>truncated</code> flags when it bites.</td></tr>
+  </table>
+
+  <h2>Issue codes</h2>
+  <table>
+    <tr><td>MISSING</td><td>A required field is absent. <code>error</code> for id/total/currency, <code>warning</code> otherwise.</td></tr>
+    <tr><td>ARITHMETIC_MISMATCH</td><td><code>subtotal + tax ≠ total</code>. <b>error</b> — the row is not safe to file.</td></tr>
+    <tr><td>TAX_RATE_MISMATCH</td><td>The stated rate doesn't produce the stated amount. <code>warning</code>.</td></tr>
+    <tr><td>TAX_NOT_REPORTED</td><td>Total minus subtotal implies tax, but no tax field was found.</td></tr>
+    <tr><td>BEFORE_ISSUE</td><td>Due date precedes issue date. <b>error</b>.</td></tr>
+    <tr><td>FUTURE_DATE</td><td>Issue date is beyond next year. <b>error</b>.</td></tr>
+    <tr><td>PARTIAL_PAYMENT</td><td>Amount due differs from total. <code>info</code>.</td></tr>
+    <tr><td>UNKNOWN_CURRENCY</td><td>Not a recognised ISO-4217 code. <code>warning</code>.</td></tr>
+  </table>
+
+  <h3>Score</h3>
+  <p style="color:var(--dim)"><code>score = 100 − 25 × errors − 7 × warnings</code>, floored at 0. A score of 100 means every check passed.</p>
+
+  <h2>What it parses correctly</h2>
+  <ul>
+    <li><b>Numbers:</b> <code>1,234.56</code> · <code>1.234,56</code> · <code>1 234,56</code> · <code>1'234.50</code> · accounting negatives <code>(250.00)</code>. An empty cell is <code>null</code>, never <code>0</code>.</li>
+    <li><b>Dates:</b> ISO, <code>15/03/2026</code>, <code>03/15/2026</code>, <code>15-Mar-2026</code>, <code>Mar 15, 2026</code>. Ambiguous slashes are disambiguated per value; <code>2026-02-31</code> is rejected.</li>
+    <li><b>Delimiters:</b> <code>,</code> <code>;</code> tab <code>|</code> — detected per file. Quoted fields with embedded delimiters survive.</li>
+    <li><b>Headers:</b> ~50 aliases with fuzzy matching, so <code>Doc Number (old)</code> maps to <code>invoice_number</code>. Unmapped headers are reported, not guessed.</li>
+  </ul>
+
+  <h2>Errors</h2>
+  <table>
+    <tr><td>401</td><td><code>invalid_api_key</code> — missing, unknown, or revoked.</td></tr>
+    <tr><td>402</td><td><code>insufficient_credits</code> — response includes the top-up path and plans.</td></tr>
+    <tr><td>413</td><td>Payload over 5 MB.</td></tr>
+    <tr><td>400</td><td><code>invalid_json</code> or <code>missing_field</code>.</td></tr>
+    <tr><td>409</td><td>Order already settled, or that <code>tx_ref</code> was used on another order.</td></tr>
+    <tr><td>429</td><td>Rate limited. Only unauthenticated and free-plan traffic is throttled.</td></tr>
+  </table>
+
+  <div class="box">
+    <b>Deterministic by design.</b> No model call means no invented invoice numbers, no
+    per-request token cost, and byte-identical output for identical input — which is what
+    makes it safe inside a month-end close.
+  </div>
+
+  <footer>
+    <a href="./index.html">Free browser version</a> · <a href="./pricing.html">Pricing</a> · <a href="https://github.com/trboufia-glitch/invoice-engine">Source</a>
+  </footer>
+</div>
+</body>
+</html>

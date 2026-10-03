@@ -76,6 +76,10 @@
       <button onclick="s(3)">Receipt text</button>
       <button onclick="s(4)">Odd headers</button>
     </div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim);margin:0 0 0 auto;cursor:pointer">
+      <input type="checkbox" id="dl" checked style="width:auto;margin:0;accent-color:var(--acc)">
+      offer a download
+    </label>
   </div>
 
   <div class="grid">
@@ -156,6 +160,10 @@ function run(){
   catch (e) { $('msg').innerHTML = '<div class="msg err">' + esc(e.message) + '</div>'; return; }
   const ms = Math.round(performance.now() - t0);
 
+  // Keep the result reachable so the download helpers can export it. Without this
+  // the buttons would silently produce empty files.
+  window._lastResult = d;
+
   const sum = d.summary;
   $('stats').innerHTML =
     '<div class="stat"><b>' + d.row_count + '</b>rows</div>' +
@@ -182,7 +190,63 @@ function run(){
   }
   h += '</tbody></table>';
   if (d.records.length > 100) h += '<div class="empty">showing 100 of ' + d.records.length + '</div>';
+
+  // Offering the corrected file is what turns a one-off visitor into someone
+  // who leaves with the output. A free tool that only shows a table sends the
+  // work back to Excel; a download is the reason to stay.
+  const dl = $('dl');
+  if (dl && dl.checked && d.records.length) {
+    const clean = d.records.filter(r => !(r.issues || []).some(i => i.severity !== 'info'));
+    const problems = problemCount();
+    h += '<div style="padding:14px 0;border-top:1px solid var(--line);margin-top:12px">' +
+         '<button style="margin:0 8px 0 0" onclick="download(\'invoice-checked.json\', toJSON())">Download checked data (JSON)</button>' +
+         (problems
+           ? '<button class="sec" onclick="download(\'invoice-errors.csv\', errorCSV())">Download the ' + problems + ' problem row' + (problems === 1 ? '' : 's') + ' (CSV)</button>'
+           : '<button class="sec" disabled>No problem rows</button>') +
+         '<div class="empty" style="padding:8px 0 0">' + clean.length + ' of ' + d.records.length + ' rows passed every check.</div>' +
+         '</div>';
+  }
   $('out').innerHTML = h;
+}
+
+function lastResult() { return window._lastResult || null; }
+function toJSON() {
+  const d = lastResult();
+  if (!d) return '{}';
+  return JSON.stringify({ checked: new Date().toISOString(), summary: d.summary, records: d.records }, null, 2);
+}
+function errorCSV() {
+  const d = lastResult();
+  if (!d) return '';
+  const q = (v) => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  // Only rows that actually need attention. Including warning-only rows made a
+  // completely clean file still export two lines, which reads as "these are your
+  // problems" when there were none.
+  const bad = d.records.filter(r => (r.issues || []).some(i => i.severity === 'error' || i.severity === 'warning'));
+  const rows = [['source_row', 'invoice_number', 'issued_date', 'vendor', 'currency', 'subtotal', 'tax', 'total', 'score', 'issue_codes']];
+  for (const r of bad) {
+    const issues = r.issues || [];
+    rows.push([r.source_row, r.invoice_number, r.issued_date, r.vendor, r.currency, r.subtotal, r.tax, r.total, r.score,
+               issues.map(i => i.code + (i.severity === 'error' ? '!' : i.severity === 'warning' ? '?' : '')).join(' ')]);
+  }
+  return rows.map(r => r.map(q).join(',')).join('\n');
+}
+function problemCount() {
+  const d = lastResult();
+  if (!d) return 0;
+  return d.records.filter(r => (r.issues || []).some(i => i.severity !== 'info')).length;
+}
+function download(filename, text) {
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
 }
 
 s(0);

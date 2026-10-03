@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Free forever vs paid — invoice.engine</title>
+<meta name="description" content="Run the invoice validator free in your browser with no limits. Pay only if you need the API or a shared team link.">
+<style>
+  :root{
+    --bg:#0a0c10;--panel:#11151c;--line:#1e2530;--fg:#e6edf6;--dim:#8b98ab;
+    --acc:#4ade80;--warn:#fbbf24;--acc2:#60a5fa;--mono:ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:15.5px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px}
+  header{border-bottom:1px solid var(--line);padding:22px 0}
+  .logo{font-family:var(--mono);font-weight:700}.logo span{color:var(--acc)}
+  h1{font-size:clamp(26px,4.4vw,36px);line-height:1.14;margin:40px 0 14px;letter-spacing:-1.1px}
+  h1 em{color:var(--acc);font-style:normal}
+  .sub{color:var(--dim);font-size:17.5px;max-width:640px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:30px 0}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column}
+  .card.free{border-color:rgba(74,222,128,.4);box-shadow:0 0 0 1px rgba(74,222,128,.12)}
+  .tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--dim)}
+  .card.free .tag{color:var(--acc)}
+  .price{font-size:38px;font-weight:800;margin:6px 0 2px;letter-spacing:-1.5px}
+  .price small{font-size:15px;font-weight:500;color:var(--dim);letter-spacing:0}
+  ul{list-style:none;padding:0;margin:16px 0 0}
+  li{padding:7px 0 7px 24px;position:relative;font-size:14.5px;color:var(--dim)}
+  li::before{content:'✓';position:absolute;left:0;color:var(--acc);font-weight:700}
+  li.no::before{content:'✕';color:var(--warn)}
+  li b{color:var(--fg)}
+  .cta{margin-top:20px}
+  .btn{display:inline-block;padding:12px 21px;border-radius:9px;text-decoration:none;font-weight:700;font-size:15px;border:1px solid var(--line);background:var(--panel);color:var(--fg)}
+  .btn.p{background:var(--acc);color:#04120a;border-color:var(--acc)}
+  .btn.p:hover{filter:brightness(1.08)}
+  .split{border-top:1px solid var(--line);margin-top:30px;padding-top:26px}
+  .split h2{font-size:20px;margin:0 0 8px;letter-spacing:-.4px}
+  .split p{color:var(--dim);font-size:15px;margin:0 0 16px}
+  .code{font-family:var(--mono);font-size:13px;background:#07090c;border:1px solid var(--line);border-radius:9px;padding:13px;overflow-x:auto;margin:14px 0;color:#c9d6e5}
+  .note{font-size:14px;color:var(--dim);background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.25);border-radius:11px;padding:15px 17px;margin:24px 0}
+  .note b{color:var(--acc2)}
+  .edge{list-style:none;padding:0;margin:14px 0;font-family:var(--mono);font-size:13.5px;color:var(--dim)}
+  .edge li{padding:6px 0;display:flex;justify-content:space-between;border-bottom:1px solid var(--line);color:var(--dim)}
+  .edge li span:last-child{color:var(--fg)}
+  .ok{color:var(--acc)}.no{color:var(--warn)}
+  footer{border-top:1px solid var(--line);margin-top:44px;padding:22px 0;color:var(--dim);font-size:14px}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="logo">invoice<span>.engine</span></div></header>
+
+  <h1>The browser tool is <em>free forever, with no limits</em>.</h1>
+  <p class="sub">If your file fits in a browser tab, you never need to pay anything — and you never need to sign up. The paid tier exists for one reason: calling it from your own code.</p>
+
+  <div class="grid">
+    <div class="card free">
+      <div class="tag">In your browser</div>
+      <div class="price">Free <small>forever</small></div>
+      <div style="color:var(--dim);font-size:14px">No account. No key. No upload.</div>
+      <ul>
+        <li><b>Unlimited</b> files and rows</li>
+        <li>Nothing leaves your device — it runs in the tab</li>
+        <li>All checks: arithmetic, tax rate, dates, currencies</li>
+        <li>Handles <b>1.234,56</b>, <b>;</b> and tab delimiters</li>
+        <li>Download the cleaned data as JSON</li>
+      </ul>
+      <div class="cta"><a class="btn p" href="./index.html">Open the checker →</a></div>
+    </div>
+
+    <div class="card">
+      <div class="tag">Via the API</div>
+      <div class="price">$5 <small>/ 100 calls</small></div>
+      <div style="color:var(--dim);font-size:14px">From $0.02 per call at volume.</div>
+      <ul>
+        <li class="no">Nothing free beyond 25 trial calls</li>
+        <li>Same engine, same checks, same results</li>
+        <li>Run it inside a pipeline or scheduled job</li>
+        <li>5 MB payload per call, up to 25,000 rows</li>
+        <li>JSON output with per-row scores</li>
+      </ul>
+      <div class="cta"><a class="btn" href="./api.html">See the API →</a></div>
+    </div>
+  </div>
+
+  <div class="split">
+    <h2>So why would anyone pay?</h2>
+    <p>Honestly — most people who need this once a month should not. Paying is for you if:</p>
+    <ul>
+      <li>You process invoices <b>automatically</b>, not by hand</li>
+      <li>You want a <b>check on every export</b> before it reaches the ledger</li>
+      <li>You need it to <b>fail loudly</b> — exit non-zero — instead of returning JSON</li>
+      <li>You're feeding a <b>month-end close</b> where a silent error is expensive</li>
+    </ul>
+
+    <h2 style="margin-top:26px">Or just take the whole thing</h2>
+    <p>The engine is pure JavaScript with no dependencies. Run it yourself, forever, with no account anywhere.</p>
+    <div class="code">npm install invoice-normalize<br><br>const { normalize } = require('invoice-normalize');<br>const r = normalize(csvText, { format: 'csv' });<br><br>if (r.summary.errors) {<br>  console.error(`${r.summary.errors} rows do not reconcile`);<br>  process.exit(1);<br>}</div>
+    <p style="font-size:14px;color:var(--dim)">MIT-licensed. No telemetry, no calls home, no account required.</p>
+  </div>
+
+  <div class="note">
+    <b>Why is the browser version free and unlimited?</b> Because running it costs me nothing —
+    your file is processed by your own CPU, not my server. I'd rather give away the thing
+    that gets people to trust the output than meter something that costs me zero to serve.
+  </div>
+
+  <h2 style="font-size:20px;margin:34px 0 8px;letter-spacing:-.4px">Try it and see the actual output</h2>
+  <ul class="edge">
+    <li><span>subtotal + tax ≠ total</span> <span class="ok">caught</span></li>
+    <li><span>tax rate doesn't match tax amount</span> <span class="ok">caught</span></li>
+    <li><span>due date before issue date</span> <span class="ok">caught</span></li>
+    <li><span>2026-02-31 (not a real date)</span> <span class="ok">rejected</span></li>
+    <li><span>1.000,00 vs 1,000.00</span> <span class="ok">parsed</span></li>
+    <li><span>blank cell read as zero</span> <span class="no">not our bug</span></li>
+  </ul>
+
+  <footer>
+    <a href="./index.html">← the free checker</a> · deterministic, no LLM, nothing uploaded
+  </footer>
+</div>
+</body>
+</html>
