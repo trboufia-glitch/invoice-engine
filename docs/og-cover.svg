@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0a0c10"/>
+  <rect x="0" y="0" width="1200" height="6" fill="#4ade80"/>
+  <text x="80" y="150" font-family="Menlo,Consolas,monospace" font-size="30" fill="#4ade80">invoice.engine</text>
+  <text x="80" y="260" font-family="Helvetica,Arial,sans-serif" font-size="66" font-weight="700" fill="#e6edf6">Invoices that</text>
+  <text x="80" y="336" font-family="Helvetica,Arial,sans-serif" font-size="66" font-weight="700" fill="#e6edf6">do not add up</text>
+  <text x="80" y="410" font-family="Menlo,Consolas,monospace" font-size="27" fill="#8b98ab">subtotal + tax  ≠  total</text>
+  <text x="80" y="470" font-family="Menlo,Consolas,monospace" font-size="27" fill="#f87171">&#8599; found, with the row number</text>
+  <text x="80" y="540" font-family="Menlo,Consolas,monospace" font-size="23" fill="#8b98ab">runs in your browser &#183; nothing uploaded</text>
+</svg>

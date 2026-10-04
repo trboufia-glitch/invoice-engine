@@ -116,6 +116,37 @@ check('every page in the sitemap exists', () => {
   }
 });
 
+check('every page has share metadata (a bare link does not get shared)', () => {
+  const missing = [];
+  for (const f of pages) {
+    const html = read(f);
+    const og = (html.match(/property="og:/g) || []).length;
+    const tw = (html.match(/name="twitter:/g) || []).length;
+    if (og < 6 || tw < 3) missing.push(`${f} (og:${og} twitter:${tw})`);
+  }
+  assert.strictEqual(missing.length, 0,
+    'pages without share cards render as naked links when shared:\n  ' + missing.join('\n  '));
+});
+
+check('each page has its own title and description', () => {
+  const titles = new Set();
+  for (const f of pages) {
+    const html = read(f);
+    const m = html.match(/property="og:title" content="([^"]+)"/);
+    assert.ok(m, f + ' has no og:title');
+    assert.ok(/og:description" content="[^"]{40,}/.test(html), f + ' has a too-short description');
+    titles.add(m[1]);
+  }
+  assert.strictEqual(titles.size, pages.length,
+    'duplicate og:titles across pages — every share would look identical');
+});
+
+check('the share image exists', () => {
+  assert.ok(fs.existsSync(path.join(DOCS, 'og-cover.svg')), 'og-cover.svg missing');
+  const svg = fs.readFileSync(path.join(DOCS, 'og-cover.svg'), 'utf8');
+  assert.ok(/<svg/.test(svg) && /1200/.test(svg) && /630/.test(svg), 'cover is not a 1200x630 svg');
+});
+
 check('the checker page declares it runs client-side', () => {
   const html = read('index.html');
   assert.ok(/nothing is uploaded|Nothing is uploaded/i.test(html), 'no privacy claim found');
