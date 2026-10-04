@@ -198,9 +198,31 @@ function run(){
     '<div class="stat"><b>' + sum.avg_score + '</b>score</div>' +
     '<div class="stat"><b>' + ms + ' ms</b>in this tab</div>';
 
-  if (sum.errors) $('msg').innerHTML = '<div class="msg err">' + sum.errors + ' row(s) do not add up — do not file these as-is.</div>';
-  else if (sum.warnings) $('msg').innerHTML = '<div class="msg warn">Nothing blocking, but ' + sum.warnings + ' warning(s) worth a look.</div>';
-  else $('msg').innerHTML = '<div class="msg ok">Clean — every row adds up.</div>';
+  // State the outcome and the counts together. Previously this said only
+  // "2 rows do not add up" while the button below said "the 5 problem rows",
+  // so the page appeared to contradict itself two inches apart.
+  const blocking = d.records.filter(function (r) {
+    return (r.issues || []).some(function (i) { return i.severity === 'error'; });
+  }).length;
+  const flagged = d.records.filter(function (r) {
+    return (r.issues || []).some(function (i) { return i.severity !== 'info'; });
+  }).length;
+
+  if (blocking) {
+    $('msg').innerHTML = '<div class="msg err"><b>' + blocking + ' of ' + d.row_count +
+      ' row' + (d.row_count === 1 ? '' : 's') + ' do not add up</b> — do not file these as-is.' +
+      (flagged > blocking
+        ? '<br><span style="opacity:.85">A further ' + (flagged - blocking) + ' row' +
+          (flagged - blocking === 1 ? '' : 's') + ' need' + (flagged - blocking === 1 ? 's' : '') +
+          ' looking at, but are not blocking.</span>'
+        : '') + '</div>';
+  } else if (sum.warnings) {
+    $('msg').innerHTML = '<div class="msg warn">Every row adds up. ' + sum.warnings +
+      ' warning' + (sum.warnings === 1 ? '' : 's') + ' worth a look first.</div>';
+  } else {
+    $('msg').innerHTML = '<div class="msg ok">Clean — all ' + d.row_count +
+      ' row' + (d.row_count === 1 ? '' : 's') + ' add up and every check passed.</div>';
+  }
 
   const cols = ['invoice_number','issued_date','due_date','vendor','currency','subtotal','tax','total'];
   const show = cols.filter(c => d.records.some(r => r[c] !== null && r[c] !== undefined));
@@ -227,7 +249,7 @@ function run(){
     h += '<div style="padding:14px 0;border-top:1px solid var(--line);margin-top:12px">' +
          '<button style="margin:0 8px 0 0" onclick="download(\'invoice-checked.json\', toJSON())">Download checked data (JSON)</button>' +
          (problems
-           ? '<button class="sec" onclick="download(\'invoice-errors.csv\', errorCSV())">Download the ' + problems + ' problem row' + (problems === 1 ? '' : 's') + ' (CSV)</button>'
+           ? '<button class="sec" onclick="download(\'invoice-errors.csv\', errorCSV())">Download the ' + problems + ' flagged row' + (problems === 1 ? '' : 's') + ' (CSV)</button>'
            : '<button class="sec" disabled>No problem rows</button>') +
          '<div class="empty" style="padding:8px 0 0">' + clean.length + ' of ' + d.records.length + ' rows passed every check.</div>' +
          '</div>';
