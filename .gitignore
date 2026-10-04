@@ -22,3 +22,4 @@ scripts/smtp_trace.js
 data/delivery-test.txt
 marketing/TARGETS.md
 marketing/EMAIL-LINKMYBOOKS.md
+data/campaign-body.txt
