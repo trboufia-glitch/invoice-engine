@@ -13,7 +13,18 @@ const assert = require('assert');
 const { normalize } = require('../lib/normalize');
 
 const page = fs.readFileSync(path.join(__dirname, '..', 'docs', 'index.html'), 'utf8');
-const script = page.split('<script>').pop().split('</script>')[0];
+// The page now contains two inline <script> blocks: the beacon and the app.
+// Splitting on '<script>' and taking .pop() grabbed the beacon, so the helpers
+// under test were never defined. Take the LAST inline block instead, which is
+// the app, and assert it actually defines them.
+const inline = [...page.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+// Select by CONTENT, never by position: the analytics beacon is appended last,
+// so the final block is not the app. Position-based selection silently tested
+// the wrong code and reported nine unrelated failures.
+const script = inline.find((s) => /function\s+run\s*\(/.test(s));
+if (!script) {
+  throw new Error('could not locate the app script block (found ' + inline.length + ' inline blocks)');
+}
 
 let fail = 0;
 function check(name, fn) {
