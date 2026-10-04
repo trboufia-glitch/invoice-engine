@@ -19,6 +19,7 @@
     "indexnow": "node scripts/indexnow.js",
     "visits": "node scripts/visits.js --summary",
     "build:browser": "node scripts/build_browser.js",
+    "build:site": "node scripts/build_browser.js && node scripts/generate_pages.js && node scripts/add_social_meta.js",
     "ledger": "node scripts/log_experiments.js"
   },
   "engines": {

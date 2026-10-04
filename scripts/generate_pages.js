@@ -179,7 +179,7 @@ ${body}
   <div class="cta">
     <h2>Check a file</h2>
     <p>Paste the CSV and see which rows do not reconcile, with the numbers side by side. It runs in your browser tab — nothing is uploaded, no signup, free with no limits.</p>
-    <a class="btn" href="./index.html">Open the checker →</a>
+    <a class="btn" href="./">Open the checker →</a>
     <a class="btn sec" href="./european-csv-invoice.html">European CSV formats</a>
   </div>
 

@@ -1,4 +1,16 @@
+# Surge serves its own robots.txt containing "Disallow: /" regardless of what is
+# published, and caches it permanently. That is why nine URLs submitted through
+# IndexNow produced zero crawls and four SEO pages were never visited at all.
+#
+# This file is what Vercel serves. Apart from the comment lines, it contains
+# exactly one directive: Allow. The Sitemap line points crawlers at the URL list.
+#
+# After any deploy, verify with:
+#   curl -s YOUR_SITE/robots.txt | grep -v '^#' | grep -i disallow
+# That must print nothing. Any match means crawlers are being turned away, and no
+# amount of sitemap submission will help.
+
 User-agent: *
 Allow: /
 
-Sitemap: https://invoice-checker-ie.surge.sh/sitemap.xml
+Sitemap: https://docs-two-alpha-63.vercel.app/sitemap.xml

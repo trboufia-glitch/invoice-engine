@@ -1,6 +1,6 @@
 # Distribution kit — invoice.engine
 
-Everything below is written to be posted as-is. Replace `https://invoice-checker-ie.surge.sh` with the deployed
+Everything below is written to be posted as-is. Replace `https://docs-two-alpha-63.vercel.app` with the deployed
 host and `990584936` with your Binance ID (default `990584936`).
 
 Posting as an anonymous "here's a free tool" link gets no replies. Every post below leads
@@ -73,12 +73,12 @@ locale stuff that breaks naive parsers: 1.234,56 vs 1,234.56, semicolon and tab
 delimiters, 15-Mar-2026. And it rejects 2026-02-31 instead of rolling it over.
 
 It runs entirely in your browser tab, so nothing is uploaded, no signup, no key:
-https://invoice-checker-ie.surge.sh
+https://docs-two-alpha-63.vercel.app
 
 The interesting part for me was the bugs. My CSV splitter was hardcoded to commas, so
 every European export collapsed into a single column — silent corruption on half the
 market. My regex for "total" matched inside "Subtotal". An empty cell parsed as 0, which
-manufactured fake warnings. All written up at https://invoice-checker-ie.surge.sh/ledger.
+manufactured fake warnings. All written up at https://docs-two-alpha-63.vercel.app/ledger.
 
 What invoice-format edge cases am I still missing?
 
@@ -102,7 +102,7 @@ don't add up: subtotal + tax ≠ total, stated tax rate doesn't match the tax am
 due date before issue date, impossible dates like Feb 31.
 
 Free, no signup, and it runs in the browser tab — your file is not uploaded anywhere:
-https://invoice-checker-ie.surge.sh
+https://docs-two-alpha-63.vercel.app
 
 The reason I built it: a client sent 40 invoices where the tax line was blank on six
 of them. The total still looked plausible, so it wasn't caught until the return was
@@ -123,7 +123,7 @@ If you export invoices from QuickBooks, Xero, Shopify or Stripe and then do anyt
 with that file in Excel — sort, split, re-import — small errors slip through. A VAT
 line that doesn't match the rate, a subtotal that doesn't reconcile with the total.
 
-Free, paste and go, runs in your browser so nothing is uploaded: https://invoice-checker-ie.surge.sh
+Free, paste and go, runs in your browser so nothing is uploaded: https://docs-two-alpha-63.vercel.app
 
 It flags the exact rows with the numbers side by side so you can see the discrepancy.
 You paste the file; nothing is stored or uploaded anywhere.
@@ -156,7 +156,7 @@ against my own messy real-world files:
 - an empty cell parsed as 0, which produced fake validation warnings
 - the demo data I shipped had arithmetic errors of its own, so the demo cried wolf
 
-All of it is written up at https://invoice-checker-ie.surge.sh/v1/ledger, failures included.
+All of it is written up at https://docs-two-alpha-63.vercel.app/v1/ledger, failures included.
 
 Current state: 58/58 tests green, works, zero revenue, no users. Payouts via USDT.
 
@@ -194,7 +194,7 @@ rate that doesn't match the amount, a total that doesn't reconcile with the
 subtotal. Nothing flags it until the return is rejected.
 
 You paste the file, it lists the rows that don't add up with the numbers side by side.
-Runs in your browser, nothing uploaded, no signup: https://invoice-checker-ie.surge.sh
+Runs in your browser, nothing uploaded, no signup: https://docs-two-alpha-63.vercel.app
 
 If your last quarter had a rejected return for a maths error, it's worth ten seconds
 to try it on this quarter's export. If not, ignore this — no follow-up.
@@ -246,10 +246,10 @@ do not build more features; fix that.
 ## Before you post: verify this works
 
 ```
-curl https://invoice-checker-ie.surge.sh/health
-curl -X POST https://invoice-checker-ie.surge.sh/v1/keys
-open https://invoice-checker-ie.surge.sh/playground   # paste the "Mismatched totals" sample, expect 3 errors
-open https://invoice-checker-ie.surge.sh/v1/ledger    # must NOT be empty — the seed ships with it
+curl https://docs-two-alpha-63.vercel.app/health
+curl -X POST https://docs-two-alpha-63.vercel.app/v1/keys
+open https://docs-two-alpha-63.vercel.app/playground   # paste the "Mismatched totals" sample, expect 3 errors
+open https://docs-two-alpha-63.vercel.app/v1/ledger    # must NOT be empty — the seed ships with it
 ```
 
 If the ledger is empty, the seed did not copy; check that `seed/` is in the image.

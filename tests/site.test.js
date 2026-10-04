@@ -46,8 +46,15 @@ check('the bundle is current with lib/normalize.js', () => {
   assert.strictEqual(dirty, '', 'bundle differs from lib/normalize.js — rebuild and commit');
 });
 
-check('every internal link resolves to a real file', () => {
+// Vercel's cleanUrls serves /pricing for the file pricing.html, so internal
+// links and the sitemap are extension-less while the files on disk are not.
+// Resolve both forms rather than insisting on one.
+function resolves(target) {
   const present = fs.readdirSync(DOCS);
+  return present.includes(target) || present.includes(target + '.html');
+}
+
+check('every internal link resolves to a real file', () => {
   const broken = [];
   for (const f of pages) {
     const html = read(f);
@@ -56,24 +63,27 @@ check('every internal link resolves to a real file', () => {
     // perfectly valid link look broken.
     for (const m of html.matchAll(/href="(\.\/[^"#]+)"/g)) {
       const target = m[1].replace(/^\.\//, '');
-      if (!present.includes(target)) broken.push(`${f} -> ${target}`);
+      if (!resolves(target)) broken.push(`${f} -> ${target}`);
     }
     for (const m of html.matchAll(/src="([^"]+\.js)"/g)) {
       const target = m[1].replace(/^\.\//, '');
-      if (!present.includes(target)) broken.push(`${f} -> ${target}`);
+      if (!resolves(target)) broken.push(`${f} -> ${target}`);
     }
   }
   assert.strictEqual(broken.length, 0, 'broken links:\n  ' + broken.join('\n  '));
 });
 
 check('every page links to the checker (the conversion path)', () => {
-  const missing = pages.filter((f) => f !== 'index.html' && !read(f).includes('./index.html'));
+  const missing = pages.filter((f) => f !== 'index.html' && !/href="\.\/"/.test(read(f)) && !read(f).includes('./index.html'));
   assert.strictEqual(missing.length, 0, 'no route to the tool from: ' + missing.join(', '));
 });
 
 check('hub.html indexes every page', () => {
   const hub = read('hub.html');
-  const missing = pages.filter((f) => f !== 'hub.html' && !hub.includes(f));
+  // index.html is the home page, linked as "./" under cleanUrls.
+  const missing = pages.filter((f) =>
+    f !== 'hub.html' && f !== 'index.html' &&
+    !hub.includes(f) && !hub.includes(f.replace('.html', '')));
   assert.strictEqual(missing.length, 0, 'hub does not link: ' + missing.join(', '));
 });
 
@@ -94,6 +104,22 @@ check('SEO files are present', () => {
   const robots = fs.readFileSync(path.join(DOCS, 'robots.txt'), 'utf8');
   assert.ok(/Sitemap:\s*https:\/\/[^\s]+\/sitemap\.xml/.test(robots),
     'robots.txt does not advertise the sitemap');
+
+  // Parse directives only. Comments are ignored, because a test that greps the
+  // whole file would flag the explanatory comment that documents the Disallow
+  // bug — and a test that "passes" on a comment while the real directive is
+  // broken is worse than no test.
+  const directives = robots
+      .split(new RegExp(String.fromCharCode(13, 10) + '|' + String.fromCharCode(10)))
+      .map((l) => l.replace(/#.*$/, '').trim())
+      .filter((l) => l && l.includes(':'));
+
+  const blocking = directives.filter((l) => /^disallow:\s*\/$/i.test(l));
+  assert.strictEqual(blocking.length, 0,
+    'robots.txt tells every crawler to leave: ' + blocking.join(', '));
+
+  assert.ok(directives.some((l) => /^allow:\s*\/$/i.test(l)),
+    'robots.txt never allows the site: ' + JSON.stringify(directives));
 });
 
 check('the IndexNow key file matches the key in indexnow.json', () => {
@@ -110,7 +136,7 @@ check('every generated page is in the sitemap', () => {
   const xml = fs.readFileSync(path.join(DOCS, 'sitemap.xml'), 'utf8');
   const missing = fs.readdirSync(DOCS)
     .filter((f) => f.endsWith('.html') && f !== 'index.html')
-    .filter((f) => !xml.includes(f));
+    .filter((f) => !xml.includes(f) && !xml.includes(f.replace('.html','')));
   assert.strictEqual(missing.length, 0, 'not in sitemap: ' + missing.join(', '));
 });
 
@@ -120,7 +146,8 @@ check('every page in the sitemap exists', () => {
   assert.ok(locs.length >= 5, 'sitemap lists too few pages');
   for (const loc of locs) {
     const name = loc === '' ? 'index.html' : loc;
-    assert.ok(fs.existsSync(path.join(DOCS, name)), `sitemap lists missing file: ${loc}`);
+    assert.ok(fs.existsSync(path.join(DOCS, name)) || fs.existsSync(path.join(DOCS, name + '.html')),
+      `sitemap lists missing file: ${loc}`);
   }
 });
 

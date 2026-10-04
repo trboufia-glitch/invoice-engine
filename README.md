@@ -9,7 +9,7 @@ due dates before issue dates, impossible dates like `2026-02-31`.
 It runs **entirely in the browser tab**. Nothing is uploaded, no signup, no API key,
 free with no limits.
 
-**[Try it →](https://invoice-checker-ie.surge.sh/)** · [Why totals don't add up](https://invoice-checker-ie.surge.sh/why-totals-dont-add-up.html) · [API](https://invoice-checker-ie.surge.sh/api.html)
+**[Try it →](https://docs-two-alpha-63.vercel.app/)** · [Why totals don't add up](https://docs-two-alpha-63.vercel.app/why-totals-dont-add-up) · [API](https://docs-two-alpha-63.vercel.app/api)
 
 ---
 
@@ -71,7 +71,7 @@ Zero runtime dependencies. Docker, Railway and Render configs included.
 ## Honest status
 
 Works, tested, and deployed — **zero revenue and no users yet.** The
-[experiment ledger](https://invoice-checker-ie.surge.sh/ledger) is public and records
+[experiment ledger](https://docs-two-alpha-63.vercel.app/ledger) is public and records
 everything, including the ten bugs found while building it:
 
 - the CSV splitter was hardcoded to `,` while the detector chose `;`, so **every European

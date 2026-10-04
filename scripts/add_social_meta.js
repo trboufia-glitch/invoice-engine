@@ -16,7 +16,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DOCS = path.join(__dirname, '..', 'docs');
-const SITE = 'https://invoice-checker-ie.surge.sh';
+const SITE = 'https://docs-two-alpha-63.vercel.app';
 
 // One description per page. A single generic description across six pages reads
 // as spam to both the platform and the person deciding whether to click.

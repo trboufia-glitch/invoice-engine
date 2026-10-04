@@ -3,14 +3,14 @@
 Every block below is ready to post. The URL is live and the pages now carry
 Open Graph cards, so a paste renders with a title and image instead of a naked link.
 
-**Live:** https://invoice-checker-ie.surge.sh/
+**Live:** https://docs-two-alpha-63.vercel.app/
 
 ---
 
 ## 1. The one-liner (WhatsApp, Slack, iMessage, LinkedIn DMs)
 
 ```
-Built a free invoice checker — paste a CSV, it finds the rows where subtotal + tax ≠ total. Runs in your browser, nothing uploaded: https://invoice-checker-ie.surge.sh/
+Built a free invoice checker — paste a CSV, it finds the rows where subtotal + tax ≠ total. Runs in your browser, nothing uploaded: https://docs-two-alpha-63.vercel.app/
 ```
 
 Shortest version that still says what it does. Use this for anyone you know who
@@ -47,7 +47,7 @@ input, same output, ~1ms for a 5-row file.
 
 It runs entirely in the browser tab. Nothing uploaded, no signup, no key.
 
-https://invoice-checker-ie.surge.sh/
+https://docs-two-alpha-63.vercel.app/
 
 I put the ten bugs I hit while building it in the repo. The one that would have
 shipped: my CSV splitter was hardcoded to commas while the delimiter detector
@@ -69,7 +69,7 @@ rate that doesn't match its amount, due dates before issue dates, impossible
 dates like Feb 31.
 
 Free, no signup, and it runs in the browser tab so the file is never uploaded:
-https://invoice-checker-ie.surge.sh/
+https://docs-two-alpha-63.vercel.app/
 
 I built it after a client sent 40 invoices where the tax line was blank on six of
 them. The totals still looked reasonable, so it wasn't caught until the return
@@ -147,7 +147,7 @@ parsers: 1.234,56 against 1,234.56, semicolon and tab delimiters, and it rejects
 2026-02-31 instead of rolling it over.
 
 Runs entirely in the browser. Nothing uploaded, no signup, no key:
-https://invoice-checker-ie.surge.sh/
+https://docs-two-alpha-63.vercel.app/
 
 The bugs I hit are written up in the repo, including the one where my CSV
 splitter was hardcoded to commas and silently destroyed every European export.
@@ -165,7 +165,7 @@ Short, personal, and it names something real about them. Three sentences:
 Hey {name} — saw you handle {their thing}. I built a free checker for the
 invoice arithmetic that breaks there: paste a CSV and it lists rows where
 subtotal + tax ≠ total, plus European formats and semicolon exports. Runs in
-the browser, nothing uploaded: https://invoice-checker-ie.surge.sh/
+the browser, nothing uploaded: https://docs-two-alpha-63.vercel.app/
 ```
 
 If they reply, the follow-up that matters:
