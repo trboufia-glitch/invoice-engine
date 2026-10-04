@@ -106,6 +106,14 @@ check('the IndexNow key file matches the key in indexnow.json', () => {
     'key file content does not match the submitted key');
 });
 
+check('every generated page is in the sitemap', () => {
+  const xml = fs.readFileSync(path.join(DOCS, 'sitemap.xml'), 'utf8');
+  const missing = fs.readdirSync(DOCS)
+    .filter((f) => f.endsWith('.html') && f !== 'index.html')
+    .filter((f) => !xml.includes(f));
+  assert.strictEqual(missing.length, 0, 'not in sitemap: ' + missing.join(', '));
+});
+
 check('every page in the sitemap exists', () => {
   const xml = fs.readFileSync(path.join(DOCS, 'sitemap.xml'), 'utf8');
   const locs = [...xml.matchAll(/<loc>https:\/\/[^/]+\/([^<]*)<\/loc>/g)].map((m) => m[1]);
@@ -118,7 +126,11 @@ check('every page in the sitemap exists', () => {
 
 check('every page has share metadata (a bare link does not get shared)', () => {
   const missing = [];
-  for (const f of pages) {
+  // Iterate the directory, not a hand-kept list: a newly generated page that
+  // nobody remembered to register is exactly how three pages shipped with
+  // zero share tags.
+  const all = fs.readdirSync(DOCS).filter((f) => f.endsWith('.html'));
+  for (const f of all) {
     const html = read(f);
     const og = (html.match(/property="og:/g) || []).length;
     const tw = (html.match(/name="twitter:/g) || []).length;
@@ -130,15 +142,24 @@ check('every page has share metadata (a bare link does not get shared)', () => {
 
 check('each page has its own title and description', () => {
   const titles = new Set();
-  for (const f of pages) {
+  for (const f of fs.readdirSync(DOCS).filter((x) => x.endsWith('.html'))) {
     const html = read(f);
     const m = html.match(/property="og:title" content="([^"]+)"/);
     assert.ok(m, f + ' has no og:title');
     assert.ok(/og:description" content="[^"]{40,}/.test(html), f + ' has a too-short description');
     titles.add(m[1]);
   }
-  assert.strictEqual(titles.size, pages.length,
+  assert.strictEqual(titles.size, fs.readdirSync(DOCS).filter((x) => x.endsWith('.html')).length,
     'duplicate og:titles across pages — every share would look identical');
+});
+
+check('share metadata is not duplicated (six stacked blocks once shipped)', () => {
+  for (const f of fs.readdirSync(DOCS).filter((x) => x.endsWith('.html'))) {
+    const html = read(f);
+    const blocks = (html.match(/<!-- OG:START/g) || []).length;
+    assert.strictEqual(blocks, 1, `${f} has ${blocks} OG blocks — the strip pattern failed to match`);
+    assert.ok((html.match(/property="og:title"/g) || []).length === 1, `${f} has duplicate og:title`);
+  }
 });
 
 check('the share image exists', () => {
