@@ -37,6 +37,10 @@ const META = {
     title: 'Invoice validation API — one POST, every broken row',
     desc: 'Deterministic invoice and CSV validation API. No model call, so no invented invoice numbers and identical output for identical input.',
   },
+  'european-csv-invoice.html': {
+    title: 'European invoice CSV: fix 1.234,56, semicolons and comma decimals',
+    desc: 'A CSV with 1.234,56 and semicolon delimiters breaks most validators silently — wrong numbers, no error. Here is what goes wrong and a free checker that handles it.',
+  },
   'hub.html': {
     title: 'invoice.engine — clean, validated invoice data',
     desc: 'A deterministic invoice and CSV validator that runs entirely in your browser. No signup, no upload.',
