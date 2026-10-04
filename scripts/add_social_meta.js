@@ -37,7 +37,7 @@ const META = {
     title: 'Free forever in your browser — when the API is worth paying for',
     desc: 'The browser checker is free with no limits. The paid API exists for one reason: running the check automatically inside your own pipeline.',
   },
-  'api.html': {
+  'api-docs.html': {
     title: 'Invoice validation API — one POST, every broken row',
     desc: 'Deterministic invoice and CSV validation API. No model call, so no invented invoice numbers and identical output for identical input.',
   },

@@ -28,7 +28,7 @@ const pages = fs.readdirSync(DOCS).filter((f) => f.endsWith('.html'));
 const read = (f) => fs.readFileSync(path.join(DOCS, f), 'utf8');
 
 check('the expected pages exist', () => {
-  for (const required of ['index.html', 'pricing.html', 'api.html', 'hub.html', 'why-totals-dont-add-up.html', 'european-csv-invoice.html']) {
+  for (const required of ['index.html', 'pricing.html', 'api-docs.html', 'hub.html', 'why-totals-dont-add-up.html', 'european-csv-invoice.html']) {
     assert.ok(pages.includes(required), `missing ${required}`);
   }
 });
